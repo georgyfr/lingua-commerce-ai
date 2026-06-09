@@ -9,48 +9,53 @@
 
 if ( ! defined( 'WPINC' ) ) { die; }
 
-// Récupération des langues disponibles
+// Chargement du registre des langues
+if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-lingua-language-registry.php';
+}
+
+// Récupération des langues disponibles (drapeaux via flag-icons SVG)
 $all_languages = array(
-    array( 'code' => 'fr_FR', 'name' => 'Français', 'native' => 'Français', 'flag' => '🇫🇷', 'rtl' => false ),
-    array( 'code' => 'en_US', 'name' => 'English', 'native' => 'English', 'flag' => '🇬🇧', 'rtl' => false ),
-    array( 'code' => 'es_ES', 'name' => 'Spanish', 'native' => 'Español', 'flag' => '🇪🇸', 'rtl' => false ),
-    array( 'code' => 'de_DE', 'name' => 'German', 'native' => 'Deutsch', 'flag' => '🇩🇪', 'rtl' => false ),
-    array( 'code' => 'it_IT', 'name' => 'Italian', 'native' => 'Italiano', 'flag' => '🇮🇹', 'rtl' => false ),
-    array( 'code' => 'pt_PT', 'name' => 'Portuguese', 'native' => 'Português', 'flag' => '🇵🇹', 'rtl' => false ),
-    array( 'code' => 'pt_BR', 'name' => 'Portuguese (Brazil)', 'native' => 'Português (Brasil)', 'flag' => '🇧🇷', 'rtl' => false ),
-    array( 'code' => 'nl_NL', 'name' => 'Dutch', 'native' => 'Nederlands', 'flag' => '🇳🇱', 'rtl' => false ),
-    array( 'code' => 'ru_RU', 'name' => 'Russian', 'native' => 'Русский', 'flag' => '🇷🇺', 'rtl' => false ),
-    array( 'code' => 'zh_CN', 'name' => 'Chinese (Simplified)', 'native' => '简体中文', 'flag' => '🇨🇳', 'rtl' => false ),
-    array( 'code' => 'zh_TW', 'name' => 'Chinese (Traditional)', 'native' => '繁體中文', 'flag' => '🇹🇼', 'rtl' => false ),
-    array( 'code' => 'ja_JP', 'name' => 'Japanese', 'native' => '日本語', 'flag' => '🇯🇵', 'rtl' => false ),
-    array( 'code' => 'ko_KR', 'name' => 'Korean', 'native' => '한국어', 'flag' => '🇰🇷', 'rtl' => false ),
-    array( 'code' => 'ar_SA', 'name' => 'Arabic', 'native' => 'العربية', 'flag' => '🇸🇦', 'rtl' => true ),
-    array( 'code' => 'he_IL', 'name' => 'Hebrew', 'native' => 'עברית', 'flag' => '🇮🇱', 'rtl' => true ),
-    array( 'code' => 'fa_IR', 'name' => 'Persian', 'native' => 'فارسی', 'flag' => '🇮🇷', 'rtl' => true ),
-    array( 'code' => 'ur_PK', 'name' => 'Urdu', 'native' => 'اردو', 'flag' => '🇵🇰', 'rtl' => true ),
-    array( 'code' => 'tr_TR', 'name' => 'Turkish', 'native' => 'Türkçe', 'flag' => '🇹🇷', 'rtl' => false ),
-    array( 'code' => 'pl_PL', 'name' => 'Polish', 'native' => 'Polski', 'flag' => '🇵🇱', 'rtl' => false ),
-    array( 'code' => 'sv_SE', 'name' => 'Swedish', 'native' => 'Svenska', 'flag' => '🇸🇪', 'rtl' => false ),
-    array( 'code' => 'da_DK', 'name' => 'Danish', 'native' => 'Dansk', 'flag' => '🇩🇰', 'rtl' => false ),
-    array( 'code' => 'no_NO', 'name' => 'Norwegian', 'native' => 'Norsk', 'flag' => '🇳🇴', 'rtl' => false ),
-    array( 'code' => 'fi_FI', 'name' => 'Finnish', 'native' => 'Suomi', 'flag' => '🇫🇮', 'rtl' => false ),
-    array( 'code' => 'cs_CZ', 'name' => 'Czech', 'native' => 'Čeština', 'flag' => '🇨🇿', 'rtl' => false ),
-    array( 'code' => 'el_GR', 'name' => 'Greek', 'native' => 'Ελληνικά', 'flag' => '🇬🇷', 'rtl' => false ),
-    array( 'code' => 'hu_HU', 'name' => 'Hungarian', 'native' => 'Magyar', 'flag' => '🇭🇺', 'rtl' => false ),
-    array( 'code' => 'ro_RO', 'name' => 'Romanian', 'native' => 'Română', 'flag' => '🇷🇴', 'rtl' => false ),
-    array( 'code' => 'bg_BG', 'name' => 'Bulgarian', 'native' => 'Български', 'flag' => '🇧🇬', 'rtl' => false ),
-    array( 'code' => 'hr_HR', 'name' => 'Croatian', 'native' => 'Hrvatski', 'flag' => '🇭🇷', 'rtl' => false ),
-    array( 'code' => 'sk_SK', 'name' => 'Slovak', 'native' => 'Slovenčina', 'flag' => '🇸🇰', 'rtl' => false ),
-    array( 'code' => 'uk_UA', 'name' => 'Ukrainian', 'native' => 'Українська', 'flag' => '🇺🇦', 'rtl' => false ),
-    array( 'code' => 'th_TH', 'name' => 'Thai', 'native' => 'ไทย', 'flag' => '🇹🇭', 'rtl' => false ),
-    array( 'code' => 'vi_VN', 'name' => 'Vietnamese', 'native' => 'Tiếng Việt', 'flag' => '🇻🇳', 'rtl' => false ),
-    array( 'code' => 'id_ID', 'name' => 'Indonesian', 'native' => 'Bahasa Indonesia', 'flag' => '🇮🇩', 'rtl' => false ),
-    array( 'code' => 'ms_MY', 'name' => 'Malay', 'native' => 'Bahasa Melayu', 'flag' => '🇲🇾', 'rtl' => false ),
-    array( 'code' => 'hi_IN', 'name' => 'Hindi', 'native' => 'हिन्दी', 'flag' => '🇮🇳', 'rtl' => false ),
-    array( 'code' => 'bn_BD', 'name' => 'Bengali', 'native' => 'বাংলা', 'flag' => '🇧🇩', 'rtl' => false ),
-    array( 'code' => 'ca_ES', 'name' => 'Catalan', 'native' => 'Català', 'flag' => '🏴', 'rtl' => false ),
-    array( 'code' => 'eu_ES', 'name' => 'Basque', 'native' => 'Euskara', 'flag' => '🏴', 'rtl' => false ),
-    array( 'code' => 'gl_ES', 'name' => 'Galician', 'native' => 'Galego', 'flag' => '🏴', 'rtl' => false ),
+    array( 'code' => 'fr_FR', 'name' => 'Français', 'native' => 'Français', 'rtl' => false ),
+    array( 'code' => 'en_US', 'name' => 'English', 'native' => 'English', 'rtl' => false ),
+    array( 'code' => 'es_ES', 'name' => 'Spanish', 'native' => 'Español', 'rtl' => false ),
+    array( 'code' => 'de_DE', 'name' => 'German', 'native' => 'Deutsch', 'rtl' => false ),
+    array( 'code' => 'it_IT', 'name' => 'Italian', 'native' => 'Italiano', 'rtl' => false ),
+    array( 'code' => 'pt_PT', 'name' => 'Portuguese', 'native' => 'Português', 'rtl' => false ),
+    array( 'code' => 'pt_BR', 'name' => 'Portuguese (Brazil)', 'native' => 'Português (Brasil)', 'rtl' => false ),
+    array( 'code' => 'nl_NL', 'name' => 'Dutch', 'native' => 'Nederlands', 'rtl' => false ),
+    array( 'code' => 'ru_RU', 'name' => 'Russian', 'native' => 'Русский', 'rtl' => false ),
+    array( 'code' => 'zh_CN', 'name' => 'Chinese (Simplified)', 'native' => '简体中文', 'rtl' => false ),
+    array( 'code' => 'zh_TW', 'name' => 'Chinese (Traditional)', 'native' => '繁體中文', 'rtl' => false ),
+    array( 'code' => 'ja_JP', 'name' => 'Japanese', 'native' => '日本語', 'rtl' => false ),
+    array( 'code' => 'ko_KR', 'name' => 'Korean', 'native' => '한국어', 'rtl' => false ),
+    array( 'code' => 'ar_SA', 'name' => 'Arabic', 'native' => 'العربية', 'rtl' => true ),
+    array( 'code' => 'he_IL', 'name' => 'Hebrew', 'native' => 'עברית', 'rtl' => true ),
+    array( 'code' => 'fa_IR', 'name' => 'Persian', 'native' => 'فارسی', 'rtl' => true ),
+    array( 'code' => 'ur_PK', 'name' => 'Urdu', 'native' => 'اردو', 'rtl' => true ),
+    array( 'code' => 'tr_TR', 'name' => 'Turkish', 'native' => 'Türkçe', 'rtl' => false ),
+    array( 'code' => 'pl_PL', 'name' => 'Polish', 'native' => 'Polski', 'rtl' => false ),
+    array( 'code' => 'sv_SE', 'name' => 'Swedish', 'native' => 'Svenska', 'rtl' => false ),
+    array( 'code' => 'da_DK', 'name' => 'Danish', 'native' => 'Dansk', 'rtl' => false ),
+    array( 'code' => 'no_NO', 'name' => 'Norwegian', 'native' => 'Norsk', 'rtl' => false ),
+    array( 'code' => 'fi_FI', 'name' => 'Finnish', 'native' => 'Suomi', 'rtl' => false ),
+    array( 'code' => 'cs_CZ', 'name' => 'Czech', 'native' => 'Čeština', 'rtl' => false ),
+    array( 'code' => 'el_GR', 'name' => 'Greek', 'native' => 'Ελληνικά', 'rtl' => false ),
+    array( 'code' => 'hu_HU', 'name' => 'Hungarian', 'native' => 'Magyar', 'rtl' => false ),
+    array( 'code' => 'ro_RO', 'name' => 'Romanian', 'native' => 'Română', 'rtl' => false ),
+    array( 'code' => 'bg_BG', 'name' => 'Bulgarian', 'native' => 'Български', 'rtl' => false ),
+    array( 'code' => 'hr_HR', 'name' => 'Croatian', 'native' => 'Hrvatski', 'rtl' => false ),
+    array( 'code' => 'sk_SK', 'name' => 'Slovak', 'native' => 'Slovenčina', 'rtl' => false ),
+    array( 'code' => 'uk_UA', 'name' => 'Ukrainian', 'native' => 'Українська', 'rtl' => false ),
+    array( 'code' => 'th_TH', 'name' => 'Thai', 'native' => 'ไทย', 'rtl' => false ),
+    array( 'code' => 'vi_VN', 'name' => 'Vietnamese', 'native' => 'Tiếng Việt', 'rtl' => false ),
+    array( 'code' => 'id_ID', 'name' => 'Indonesian', 'native' => 'Bahasa Indonesia', 'rtl' => false ),
+    array( 'code' => 'ms_MY', 'name' => 'Malay', 'native' => 'Bahasa Melayu', 'rtl' => false ),
+    array( 'code' => 'hi_IN', 'name' => 'Hindi', 'native' => 'हिन्दी', 'rtl' => false ),
+    array( 'code' => 'bn_BD', 'name' => 'Bengali', 'native' => 'বাংলা', 'rtl' => false ),
+    array( 'code' => 'ca_ES', 'name' => 'Catalan', 'native' => 'Català', 'rtl' => false ),
+    array( 'code' => 'eu_ES', 'name' => 'Basque', 'native' => 'Euskara', 'rtl' => false ),
+    array( 'code' => 'gl_ES', 'name' => 'Galician', 'native' => 'Galego', 'rtl' => false ),
 );
 
 // Récupération des langues actives depuis la base
@@ -155,8 +160,15 @@ $search_query = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
     }
 
     .lingua-lang-card .lang-flag {
-        font-size: 32px;
+        font-size: 24px;
         line-height: 1;
+        display: inline-flex;
+        align-items: center;
+    }
+    .lingua-lang-card .lang-flag .fi {
+        width: 32px;
+        height: 22px;
+        border-radius: 3px;
     }
 
     .lingua-lang-card .lang-info {
@@ -359,7 +371,8 @@ $search_query = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
         border-color: #a3d9a3;
     }
 
-    .lingua-active-flag-item .item-flag { font-size: 18px; }
+    .lingua-active-flag-item .item-flag { font-size: 14px; display: inline-flex; align-items: center; }
+    .lingua-active-flag-item .item-flag .fi { width: 18px; height: 13px; border-radius: 2px; }
     .lingua-active-flag-item .item-name { font-weight: 500; }
     .lingua-active-flag-item .item-remove {
         cursor: pointer;
@@ -413,7 +426,7 @@ $search_query = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
                 $is_source = ( $lang['code'] === $source_lang );
             ?>
                 <div class="lingua-active-flag-item <?php echo $is_source ? 'is-source' : ''; ?>">
-                    <span class="item-flag"><?php echo esc_html( $lang['flag'] ); ?></span>
+                    <span class="item-flag"><?php echo LinguaCommerce_Language_Registry::get_flag( $lang['code'], 'sm' ); ?></span>
                     <span class="item-name"><?php echo esc_html( $lang['native'] ); ?></span>
                     <?php if ( $is_source ) : ?>
                         <span style="font-size:10px; color:#00a32a; font-weight:600;">SOURCE</span>
@@ -451,7 +464,7 @@ $search_query = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
                 <?php endif; ?>
 
                 <div class="lang-card-header">
-                    <span class="lang-flag"><?php echo esc_html( $lang['flag'] ); ?></span>
+                    <span class="lang-flag"><?php echo LinguaCommerce_Language_Registry::get_flag( $lang['code'], 'lg' ); ?></span>
                     <div class="lang-info">
                         <div class="lang-native-name"><?php echo esc_html( $lang['native'] ); ?></div>
                         <div class="lang-english-name"><?php echo esc_html( $lang['name'] ); ?></div>

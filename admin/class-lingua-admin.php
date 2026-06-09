@@ -62,7 +62,26 @@ class LinguaCommerce_AI_Admin {
      * (Les styles sont gérés dans les vues partielles pour ce plugin)
      */
     public function enqueue_styles() {
-        // Styles intégrés dans les partials - pas de fichier CSS externe à charger ici
+        // Librairie flag-icons pour les drapeaux SVG (compatible Windows)
+        if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+            require_once plugin_dir_path( __FILE__ ) . 'includes/class-lingua-language-registry.php';
+        }
+        wp_enqueue_style(
+            'flag-icons',
+            'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css',
+            array(),
+            '7.2.3'
+        );
+        // CSS custom pour les drapeaux LinguaCommerce
+        $flag_css = '
+            .fi { display: inline-block; width: 1.333em; height: 1em; vertical-align: middle; border-radius: 2px; background-size: cover; }
+            .lingua-flag-sm .fi, .fi.lingua-flag-sm { width: 1em; height: 0.75em; }
+            .lingua-flag-lg .fi, .fi.lingua-flag-lg { width: 2em; height: 1.5em; }
+            .lingua-flag-placeholder { display: inline-flex; align-items: center; justify-content: center; width: 1.333em; height: 1em; background: #ddd; color: #555; font-size: 10px; font-weight: 700; border-radius: 2px; vertical-align: middle; }
+            .lingua-flag-placeholder.lingua-flag-sm { width: 1em; height: 0.75em; font-size: 8px; }
+            .lingua-flag-placeholder.lingua-flag-lg { width: 2em; height: 1.5em; font-size: 12px; }
+        ';
+        wp_add_inline_style( 'flag-icons', $flag_css );
     }
 
     /**

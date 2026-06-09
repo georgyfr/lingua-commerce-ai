@@ -107,19 +107,38 @@ class LinguaCommerce_Language_Registry {
     }
 
     /**
-     * Retourne le drapeau emoji pour un code langue (ex: 'fr_FR' → '🇫🇷')
-     * Utilise le code pays ISO 3166-1 alpha-2 extrait du locale.
+     * Retourne le drapeau HTML pour un code langue (ex: 'fr_FR' → '<span class="fi fi-fr">')
+     * Utilise la librairie flag-icons (SVG) pour compatibilité Windows.
      *
      * @param string $lang_code Code langue complet (ex: fr_FR, en_US, pt_BR)
-     * @return string Emoji drapeau ou 🏳️ par défaut
+     * @param string $size      Taille du drapeau : 'sm' (16px), 'md' (24px), 'lg' (32px)
+     * @return string HTML du drapeau
      */
-    public static function get_flag( $lang_code ) {
-        $flags = self::get_all_flags();
-        // Essai avec le code complet d'abord (ex: pt_BR)
+    public static function get_flag( $lang_code, $size = 'md' ) {
+        $country_code = self::get_country_code( $lang_code );
+        $size_class = '';
+        if ( $size === 'sm' ) {
+            $size_class = ' lingua-flag-sm';
+        } elseif ( $size === 'lg' ) {
+            $size_class = ' lingua-flag-lg';
+        }
+        if ( $country_code ) {
+            return '<span class="fi fi-' . esc_attr( $country_code ) . $size_class . '"></span>';
+        }
+        return '<span class="lingua-flag-placeholder' . $size_class . '">' . esc_html( strtoupper( substr( $lang_code, 0, 2 ) ) ) . '</span>';
+    }
+
+    /**
+     * Retourne l'emoji drapeau pour un code langue (fallback pour les emails/API)
+     *
+     * @param string $lang_code Code langue complet
+     * @return string Emoji drapeau
+     */
+    public static function get_flag_emoji( $lang_code ) {
+        $flags = self::get_all_emoji_flags();
         if ( isset( $flags[ $lang_code ] ) ) {
             return $flags[ $lang_code ];
         }
-        // Essai avec le code 2 lettres (ex: fr)
         $short = substr( $lang_code, 0, 2 );
         if ( isset( $flags[ $short ] ) ) {
             return $flags[ $short ];
@@ -128,12 +147,104 @@ class LinguaCommerce_Language_Registry {
     }
 
     /**
-     * Retourne le mapping complet code langue → drapeau emoji
-     * Supporte les codes complets (fr_FR) et courts (fr)
+     * Extrait le code pays ISO 3166-1 alpha-2 d'un locale
+     *
+     * @param string $lang_code Code langue (ex: fr_FR, en_US, pt_BR)
+     * @return string|false Code pays en minuscules (ex: fr, us, br) ou false
+     */
+    public static function get_country_code( $lang_code ) {
+        $mapping = self::get_country_code_mapping();
+        // Essai avec le code complet d'abord
+        if ( isset( $mapping[ $lang_code ] ) ) {
+            return $mapping[ $lang_code ];
+        }
+        // Essai avec le code 2 lettres
+        $short = substr( $lang_code, 0, 2 );
+        if ( isset( $mapping[ $short ] ) ) {
+            return $mapping[ $short ];
+        }
+        // Dernier recours : extraire la partie pays du locale
+        $parts = explode( '_', $lang_code );
+        if ( count( $parts ) === 2 && strlen( $parts[1] ) === 2 ) {
+            return strtolower( $parts[1] );
+        }
+        return false;
+    }
+
+    /**
+     * Mapping complet des codes langue → codes pays pour flag-icons
      *
      * @return array
      */
-    public static function get_all_flags() {
+    public static function get_country_code_mapping() {
+        return array(
+            // Codes complets (locale WordPress)
+            'en_US' => 'us', 'en_GB' => 'gb', 'en_CA' => 'ca', 'en_AU' => 'au', 'en_NZ' => 'nz',
+            'fr_FR' => 'fr', 'fr_CA' => 'ca', 'fr_BE' => 'be',
+            'de_DE' => 'de', 'de_AT' => 'at', 'de_CH' => 'ch',
+            'es_ES' => 'es', 'es_MX' => 'mx',
+            'it_IT' => 'it',
+            'pt_PT' => 'pt', 'pt_BR' => 'br',
+            'nl_NL' => 'nl', 'nl_BE' => 'be',
+            'ru_RU' => 'ru',
+            'pl_PL' => 'pl',
+            'tr_TR' => 'tr',
+            'sv_SE' => 'se',
+            'da_DK' => 'dk',
+            'no_NO' => 'no',
+            'fi_FI' => 'fi',
+            'el_GR' => 'gr',
+            'cs_CZ' => 'cz',
+            'ro_RO' => 'ro',
+            'hu_HU' => 'hu',
+            'bg_BG' => 'bg',
+            'hr_HR' => 'hr',
+            'sk_SK' => 'sk',
+            'sl_SI' => 'si',
+            'et_EE' => 'ee',
+            'lv_LV' => 'lv',
+            'lt_LT' => 'lt',
+            'uk_UA' => 'ua',
+            'sr_RS' => 'rs',
+            'zh_CN' => 'cn', 'zh_TW' => 'tw',
+            'ja_JP' => 'jp',
+            'ko_KR' => 'kr',
+            'hi_IN' => 'in',
+            'id_ID' => 'id',
+            'ms_MY' => 'my',
+            'th_TH' => 'th',
+            'vi_VN' => 'vn',
+            'fil_PH' => 'ph',
+            'ar_SA' => 'sa', 'ar_EG' => 'eg',
+            'he_IL' => 'il',
+            'fa_IR' => 'ir',
+            'ur_PK' => 'pk',
+            'af_ZA' => 'za',
+            'zu_ZA' => 'za',
+            'sw_KE' => 'ke',
+            'bn_BD' => 'bd',
+            'ca_ES' => 'es-ct',
+            'eu_ES' => 'es-pv',
+            'gl_ES' => 'es-ga',
+
+            // Codes courts (fallback 2 lettres)
+            'en' => 'gb', 'fr' => 'fr', 'de' => 'de', 'es' => 'es', 'it' => 'it',
+            'pt' => 'pt', 'nl' => 'nl', 'ru' => 'ru', 'zh' => 'cn', 'ja' => 'jp',
+            'ar' => 'sa', 'ko' => 'kr', 'tr' => 'tr', 'pl' => 'pl', 'sv' => 'se',
+            'da' => 'dk', 'no' => 'no', 'fi' => 'fi', 'el' => 'gr', 'cs' => 'cz',
+            'ro' => 'ro', 'hu' => 'hu', 'bg' => 'bg', 'hr' => 'hr', 'sk' => 'sk',
+            'uk' => 'ua', 'hi' => 'in', 'id' => 'id', 'ms' => 'my', 'th' => 'th',
+            'vi' => 'vn', 'he' => 'il', 'fa' => 'ir', 'ur' => 'pk', 'sw' => 'ke',
+        );
+    }
+
+    /**
+     * Retourne le mapping complet code langue → drapeau emoji
+     * Utilisé comme fallback pour les emails/API où le HTML n'est pas supporté
+     *
+     * @return array
+     */
+    public static function get_all_emoji_flags() {
         return array(
             // Codes complets (locale WordPress)
             'en_US' => '🇺🇸', 'en_GB' => '🇬🇧', 'en_CA' => '🇨🇦', 'en_AU' => '🇦🇺', 'en_NZ' => '🇳🇿',
@@ -189,5 +300,37 @@ class LinguaCommerce_Language_Registry {
             'uk' => '🇺🇦', 'hi' => '🇮🇳', 'id' => '🇮🇩', 'ms' => '🇲🇾', 'th' => '🇹🇭',
             'vi' => '🇻🇳', 'he' => '🇮🇱', 'fa' => '🇮🇷', 'ur' => '🇵🇰', 'sw' => '🇰🇪',
         );
+    }
+
+    /**
+     * Retourne le mapping complet code langue → drapeau HTML (flag-icons)
+     *
+     * @return array
+     */
+    public static function get_all_flags() {
+        $mapping = self::get_country_code_mapping();
+        $flags = array();
+        foreach ( $mapping as $lang_code => $country_code ) {
+            $flags[ $lang_code ] = '<span class="fi fi-' . esc_attr( $country_code ) . '"></span>';
+        }
+        return $flags;
+    }
+
+    /**
+     * Retourne le CSS nécessaire pour afficher les drapeaux (flag-icons)
+     * À appeler dans le <head> de l'admin
+     *
+     * @return string CSS + link tag
+     */
+    public static function get_flag_css() {
+        return '<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css">'
+             . '<style>'
+             . '.fi { display: inline-block; width: 1.333em; height: 1em; vertical-align: middle; border-radius: 2px; background-size: cover; }'
+             . '.lingua-flag-sm .fi, .fi.lingua-flag-sm { width: 1em; height: 0.75em; }'
+             . '.lingua-flag-lg .fi, .fi.lingua-flag-lg { width: 2em; height: 1.5em; }'
+             . '.lingua-flag-placeholder { display: inline-flex; align-items: center; justify-content: center; width: 1.333em; height: 1em; background: #ddd; color: #555; font-size: 10px; font-weight: 700; border-radius: 2px; vertical-align: middle; }'
+             . '.lingua-flag-placeholder.lingua-flag-sm { width: 1em; height: 0.75em; font-size: 8px; }'
+             . '.lingua-flag-placeholder.lingua-flag-lg { width: 2em; height: 1.5em; font-size: 12px; }'
+             . '</style>';
     }
 }

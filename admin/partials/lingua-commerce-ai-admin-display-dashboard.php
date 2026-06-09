@@ -356,9 +356,16 @@ if ( class_exists( 'LinguaCommerce_Language_Service' ) ) {
     }
 
     .lingua-lang-bar-item .lang-flag {
-        font-size: 20px;
+        font-size: 14px;
         min-width: 28px;
         text-align: center;
+        display: inline-flex;
+        align-items: center;
+    }
+    .lingua-lang-bar-item .lang-flag .fi {
+        width: 22px;
+        height: 16px;
+        border-radius: 2px;
     }
 
     .lingua-lang-bar-item .lang-code {
@@ -657,10 +664,9 @@ if ( class_exists( 'LinguaCommerce_Language_Service' ) ) {
                 }
                 foreach ( $translations_by_lang as $item ) :
                     $pct = $max_lang_count > 0 ? round( ( $item->cnt / $max_lang_count ) * 100 ) : 0;
-                    $flag = LinguaCommerce_Language_Registry::get_flag( $item->language );
                 ?>
                     <div class="lingua-lang-bar-item">
-                        <span class="lang-flag"><?php echo esc_html( $flag ); ?></span>
+                        <span class="lang-flag"><?php echo LinguaCommerce_Language_Registry::get_flag( $item->language ); ?></span>
                         <span class="lang-code"><?php echo esc_html( strtoupper( $item->language ) ); ?></span>
                         <div class="lang-bar-track">
                             <div class="lang-bar-fill" style="width: <?php echo esc_attr( $pct ); ?>%;"></div>

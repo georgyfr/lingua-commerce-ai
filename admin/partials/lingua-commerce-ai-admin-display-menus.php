@@ -197,7 +197,8 @@ $translatable_widgets = array(
         border-radius: 6px;
     }
 
-    .lingua-rtl-lang-flag { font-size: 22px; }
+    .lingua-rtl-lang-flag { font-size: 16px; display: inline-flex; align-items: center; }
+    .lingua-rtl-lang-flag .fi { width: 22px; height: 16px; border-radius: 2px; }
     .lingua-rtl-lang-name { font-weight: 600; font-size: 13px; }
     .lingua-rtl-lang-code { font-size: 12px; color: #856404; }
     .lingua-rtl-lang-dir { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #fff3cd; color: #856404; }
@@ -532,13 +533,14 @@ $translatable_widgets = array(
             <?php if ( ! empty( $active_rtl_langs ) ) : ?>
                 <h3>🔤 Langues RTL actives</h3>
                 <?php
-                $rtl_flags = array( 'ar' => '🇸🇦', 'he' => '🇮🇱', 'fa' => '🇮🇷', 'ur' => '🇵🇰' );
+                if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+                    require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-lingua-language-registry.php';
+                }
                 foreach ( $active_rtl_langs as $rtl_lang ) :
                     $short = substr( $rtl_lang->code, 0, 2 );
-                    $flag = isset( $rtl_flags[ $short ] ) ? $rtl_flags[ $short ] : '🏳️';
                 ?>
                     <div class="lingua-rtl-lang-item">
-                        <span class="lingua-rtl-lang-flag"><?php echo esc_html( $flag ); ?></span>
+                        <span class="lingua-rtl-lang-flag"><?php echo LinguaCommerce_Language_Registry::get_flag( $rtl_lang->code ); ?></span>
                         <span class="lingua-rtl-lang-name"><?php echo esc_html( $rtl_lang->native_name ); ?></span>
                         <span class="lingua-rtl-lang-code"><?php echo esc_html( $rtl_lang->code ); ?></span>
                         <span class="lingua-rtl-lang-dir">RTL →</span>

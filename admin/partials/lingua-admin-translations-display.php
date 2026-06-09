@@ -385,7 +385,8 @@ $type_labels = array(
     .lingua-cascade-row:last-child { border-bottom: none; }
     .lingua-cascade-row:hover { background: #f9fafb; }
 
-    .lingua-cascade-row .cascade-flag { font-size: 18px; }
+    .lingua-cascade-row .cascade-flag { font-size: 14px; display: inline-flex; align-items: center; }
+    .lingua-cascade-row .cascade-flag .fi { width: 20px; height: 14px; border-radius: 2px; }
     .lingua-cascade-row .cascade-lang { font-weight: 500; min-width: 60px; }
     .lingua-cascade-row .cascade-status { min-width: 110px; }
     .lingua-cascade-row .cascade-actions { margin-left: auto; }
@@ -615,10 +616,10 @@ $type_labels = array(
             <option value="all" <?php selected( $current_lang, 'all' ); ?>>Toutes les langues</option>
             <?php foreach ( $available_langs as $lang ) :
                 $short = substr( $lang, 0, 2 );
-                $flag = LinguaCommerce_Language_Registry::get_flag( $lang ) . ' ';
+                $flag = LinguaCommerce_Language_Registry::get_flag( $lang, 'sm' );
             ?>
                 <option value="<?php echo esc_attr( $lang ); ?>" <?php selected( $current_lang, $lang ); ?>>
-                    <?php echo esc_html( $flag . strtoupper( $lang ) ); ?>
+                    <?php echo $flag . ' ' . esc_html( strtoupper( $lang ) ); ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -666,7 +667,7 @@ $type_labels = array(
                 <?php if ( ! empty( $translations ) ) : ?>
                     <?php foreach ( $translations as $tr ) :
                         $short_lang = substr( $tr->language, 0, 2 );
-                        $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language );
+                        $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language, 'sm' );
                         $icon = isset( $type_icons[ $tr->object_type ] ) ? $type_icons[ $tr->object_type ] : '📄';
                         $type_label = isset( $type_labels[ $tr->object_type ] ) ? $type_labels[ $tr->object_type ] : ucfirst( $tr->object_type );
                         $title = $tr->source_title ? $tr->source_title : '(sans titre)';
@@ -686,7 +687,7 @@ $type_labels = array(
                                     <?php echo esc_html( ucfirst( $tr->status ) ); ?>
                                 </span>
                             </td>
-                            <td><?php echo esc_html( $flag . ' ' . strtoupper( $short_lang ) ); ?></td>
+                            <td><?php echo $flag . ' ' . esc_html( strtoupper( $short_lang ) ); ?></td>
                             <td><?php echo esc_html( $icon . ' ' . $type_label ); ?></td>
                             <td><?php echo esc_html( ucfirst( $tr->source ?? 'ai' ) ); ?></td>
                             <td style="font-size:12px; color:#666;">
@@ -718,7 +719,7 @@ $type_labels = array(
             <?php if ( ! empty( $translations ) ) : ?>
                 <?php foreach ( $translations as $tr ) :
                     $short_lang = substr( $tr->language, 0, 2 );
-                    $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language );
+                    $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language, 'sm' );
                     $title = $tr->source_title ? $tr->source_title : '(sans titre)';
                     $excerpt = $tr->translated_text ? mb_substr( strip_tags( $tr->translated_text ), 0, 120 ) : 'Pas encore traduit...';
                 ?>
@@ -729,7 +730,7 @@ $type_labels = array(
                                 <?php echo esc_html( ucfirst( $tr->status ) ); ?>
                             </span>
                             <span class="masonry-title"><?php echo esc_html( $title ); ?></span>
-                            <span><?php echo esc_html( $flag ); ?></span>
+                            <span><?php echo $flag; ?></span>
                         </div>
                         <div class="masonry-excerpt"><?php echo esc_html( $excerpt ); ?></div>
                         <div class="masonry-footer">
@@ -782,10 +783,10 @@ $type_labels = array(
                         <div class="lingua-cascade-group-body">
                             <?php foreach ( $group['items'] as $tr ) :
                                 $short_lang = substr( $tr->language, 0, 2 );
-                                $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language );
+                                $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language, 'sm' );
                             ?>
                                 <div class="lingua-cascade-row" data-id="<?php echo esc_attr( $tr->id ); ?>">
-                                    <span class="cascade-flag"><?php echo esc_html( $flag ); ?></span>
+                                    <span class="cascade-flag"><?php echo $flag; ?></span>
                                     <span class="cascade-lang"><?php echo esc_html( strtoupper( $short_lang ) ); ?></span>
                                     <span class="cascade-status">
                                         <span class="lingua-status-badge status-<?php echo esc_attr( $tr->status ); ?>">
