@@ -1,0 +1,259 @@
+/**
+ * LinguaCommerce Live Editor Styles
+ * Version : 3.2 - Professional Edition (Whole Page Translation & Progress Feedback)
+ */
+
+/* --- MODE ÉDITION ACTIVÉ --- */
+
+body.lingua-edit-mode-active .lingua-live-wrapped {
+    outline: 2px dashed #2271b1 !important;
+    outline-offset: 1px;
+    background-color: rgba(34, 113, 177, 0.05);
+    cursor: pointer;
+    transition: outline 0.2s ease-in-out;
+    border-radius: 2px;
+    position: relative;
+}
+
+body.lingua-edit-mode-active .lingua-live-wrapped::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99998;
+    background: transparent;
+}
+
+body.lingua-edit-mode-active .lingua-live-wrapped:hover {
+    outline-color: #000 !important;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.lingua-edit-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 10px;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+body.lingua-edit-mode-active .lingua-live-wrapped:hover .lingua-edit-icon {
+    opacity: 1;
+    background: #2271b1;
+}
+
+/* --- SIDEBAR & OVERLAY PREMIUM --- */
+
+.lingua-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 999999;
+    display: none;
+}
+
+body.lingua-sidebar-open .lingua-sidebar-overlay {
+    display: block;
+}
+
+#lingua-live-sidebar {
+    position: fixed;
+    top: 0;
+    right: -450px;
+    width: 420px;
+    height: 100%;
+    background: #ffffff;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+    z-index: 1000000;
+    transition: right 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+body.lingua-sidebar-open #lingua-live-sidebar {
+    right: 0;
+}
+
+.lingua-sidebar-header {
+    padding: 25px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+}
+
+.lingua-sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.lingua-sidebar-close {
+    cursor: pointer;
+    font-size: 28px;
+    color: #999;
+}
+
+.lingua-sidebar-body {
+    flex-grow: 1;
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.lingua-field-group {
+    margin-bottom: 25px;
+}
+
+.lingua-field-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #666;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.lingua-original-text {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    font-style: italic;
+    color: #444;
+    min-height: 50px;
+}
+
+#lingua-translation-input {
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.lingua-sidebar-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 15px;
+}
+
+.lingua-sidebar-footer button {
+    flex: 1;
+    height: 48px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+}
+
+#lingua-btn-save {
+    background: #000;
+    color: #fff;
+}
+
+#lingua-btn-save:hover { opacity: 0.9; }
+
+button:active { transform: scale(0.98); }
+
+/* --- BOUTONS ADMIN BAR --- */
+
+#wpadminbar .lingua-admin-bar-btn a {
+    font-weight: 700 !important;
+}
+
+#wpadminbar .lingua-btn-highlight a {
+    background: linear-gradient(135deg, #111 0%, #333 100%) !important;
+    color: #fff !important;
+    border-radius: 4px;
+    margin-left: 8px !important;
+    padding: 0 15px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+#wpadminbar .lingua-btn-highlight a:hover {
+    background: #000 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* --- LOADER GLOBAL --- */
+
+.lingua-global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lingua-loader-content {
+    background: #fff;
+    padding: 50px 70px;
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.2);
+    text-align: center;
+    border: 1px solid #f0f0f0;
+}
+
+.lingua-spinner {
+    width: 70px;
+    height: 70px;
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #111;
+    border-radius: 50%;
+    animation: lingua-spin 1s linear infinite;
+    margin: 0 auto 30px;
+}
+
+@keyframes lingua-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.lingua-loader-content p {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.5px;
+}
+
+body.lingua-loading {
+    overflow: hidden !important;
+}
+
+/* --- RESPONSIVE SIDEBAR --- */
+@media (max-width: 782px) {
+    #lingua-live-sidebar {
+        width: 100%;
+        height: 60%;
+        top: auto;
+        bottom: 0;
+    }
+}
