@@ -88,12 +88,10 @@ if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_tra
     }
 }
 
-// Drapeaux
-$lang_flags = array(
-    'en' => '🇬🇧', 'fr' => '🇫🇷', 'de' => '🇩🇪', 'es' => '🇪🇸', 'it' => '🇮🇹',
-    'pt' => '🇵🇹', 'nl' => '🇳🇱', 'ru' => '🇷🇺', 'zh' => '🇨🇳', 'ja' => '🇯🇵',
-    'ar' => '🇸🇦', 'ko' => '🇰🇷', 'tr' => '🇹🇷', 'pl' => '🇵🇱', 'sv' => '🇸🇪',
-);
+// Drapeaux (centralisés via Language Registry)
+if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+    require_once plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'admin/includes/class-lingua-language-registry.php';
+}
 
 // Icônes de type
 $type_icons = array(
@@ -617,7 +615,7 @@ $type_labels = array(
             <option value="all" <?php selected( $current_lang, 'all' ); ?>>Toutes les langues</option>
             <?php foreach ( $available_langs as $lang ) :
                 $short = substr( $lang, 0, 2 );
-                $flag = isset( $lang_flags[ $short ] ) ? $lang_flags[ $short ] . ' ' : '';
+                $flag = LinguaCommerce_Language_Registry::get_flag( $lang ) . ' ';
             ?>
                 <option value="<?php echo esc_attr( $lang ); ?>" <?php selected( $current_lang, $lang ); ?>>
                     <?php echo esc_html( $flag . strtoupper( $lang ) ); ?>
@@ -668,7 +666,7 @@ $type_labels = array(
                 <?php if ( ! empty( $translations ) ) : ?>
                     <?php foreach ( $translations as $tr ) :
                         $short_lang = substr( $tr->language, 0, 2 );
-                        $flag = isset( $lang_flags[ $short_lang ] ) ? $lang_flags[ $short_lang ] : '🏳️';
+                        $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language );
                         $icon = isset( $type_icons[ $tr->object_type ] ) ? $type_icons[ $tr->object_type ] : '📄';
                         $type_label = isset( $type_labels[ $tr->object_type ] ) ? $type_labels[ $tr->object_type ] : ucfirst( $tr->object_type );
                         $title = $tr->source_title ? $tr->source_title : '(sans titre)';
@@ -720,7 +718,7 @@ $type_labels = array(
             <?php if ( ! empty( $translations ) ) : ?>
                 <?php foreach ( $translations as $tr ) :
                     $short_lang = substr( $tr->language, 0, 2 );
-                    $flag = isset( $lang_flags[ $short_lang ] ) ? $lang_flags[ $short_lang ] : '🏳️';
+                    $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language );
                     $title = $tr->source_title ? $tr->source_title : '(sans titre)';
                     $excerpt = $tr->translated_text ? mb_substr( strip_tags( $tr->translated_text ), 0, 120 ) : 'Pas encore traduit...';
                 ?>
@@ -784,7 +782,7 @@ $type_labels = array(
                         <div class="lingua-cascade-group-body">
                             <?php foreach ( $group['items'] as $tr ) :
                                 $short_lang = substr( $tr->language, 0, 2 );
-                                $flag = isset( $lang_flags[ $short_lang ] ) ? $lang_flags[ $short_lang ] : '🏳️';
+                                $flag = LinguaCommerce_Language_Registry::get_flag( $tr->language );
                             ?>
                                 <div class="lingua-cascade-row" data-id="<?php echo esc_attr( $tr->id ); ?>">
                                     <span class="cascade-flag"><?php echo esc_html( $flag ); ?></span>

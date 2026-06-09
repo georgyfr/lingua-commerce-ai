@@ -652,14 +652,12 @@ if ( class_exists( 'LinguaCommerce_Language_Service' ) ) {
             <?php if ( ! empty( $translations_by_lang ) ) : ?>
                 <?php
                 $max_lang_count = ! empty( $translations_by_lang ) ? (int) $translations_by_lang[0]->cnt : 1;
-                $lang_flags = array(
-                    'en' => '🇬🇧', 'fr' => '🇫🇷', 'de' => '🇩🇪', 'es' => '🇪🇸', 'it' => '🇮🇹',
-                    'pt' => '🇵🇹', 'nl' => '🇳🇱', 'ru' => '🇷🇺', 'zh' => '🇨🇳', 'ja' => '🇯🇵',
-                    'ar' => '🇸🇦', 'ko' => '🇰🇷', 'tr' => '🇹🇷', 'pl' => '🇵🇱', 'sv' => '🇸🇪',
-                );
+                if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+                    require_once plugin_dir_path( dirname( dirname( __FILE__ ) ) ) . 'admin/includes/class-lingua-language-registry.php';
+                }
                 foreach ( $translations_by_lang as $item ) :
                     $pct = $max_lang_count > 0 ? round( ( $item->cnt / $max_lang_count ) * 100 ) : 0;
-                    $flag = isset( $lang_flags[ $item->language ] ) ? $lang_flags[ $item->language ] : '🏳️';
+                    $flag = LinguaCommerce_Language_Registry::get_flag( $item->language );
                 ?>
                     <div class="lingua-lang-bar-item">
                         <span class="lang-flag"><?php echo esc_html( $flag ); ?></span>

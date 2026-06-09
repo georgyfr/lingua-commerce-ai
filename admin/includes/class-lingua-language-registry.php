@@ -105,4 +105,89 @@ class LinguaCommerce_Language_Registry {
         $all = self::get_all();
         return isset( $all[ $code ] ) ? $all[ $code ] : null;
     }
+
+    /**
+     * Retourne le drapeau emoji pour un code langue (ex: 'fr_FR' → '🇫🇷')
+     * Utilise le code pays ISO 3166-1 alpha-2 extrait du locale.
+     *
+     * @param string $lang_code Code langue complet (ex: fr_FR, en_US, pt_BR)
+     * @return string Emoji drapeau ou 🏳️ par défaut
+     */
+    public static function get_flag( $lang_code ) {
+        $flags = self::get_all_flags();
+        // Essai avec le code complet d'abord (ex: pt_BR)
+        if ( isset( $flags[ $lang_code ] ) ) {
+            return $flags[ $lang_code ];
+        }
+        // Essai avec le code 2 lettres (ex: fr)
+        $short = substr( $lang_code, 0, 2 );
+        if ( isset( $flags[ $short ] ) ) {
+            return $flags[ $short ];
+        }
+        return '🏳️';
+    }
+
+    /**
+     * Retourne le mapping complet code langue → drapeau emoji
+     * Supporte les codes complets (fr_FR) et courts (fr)
+     *
+     * @return array
+     */
+    public static function get_all_flags() {
+        return array(
+            // Codes complets (locale WordPress)
+            'en_US' => '🇺🇸', 'en_GB' => '🇬🇧', 'en_CA' => '🇨🇦', 'en_AU' => '🇦🇺', 'en_NZ' => '🇳🇿',
+            'fr_FR' => '🇫🇷', 'fr_CA' => '🇨🇦', 'fr_BE' => '🇧🇪',
+            'de_DE' => '🇩🇪', 'de_AT' => '🇦🇹', 'de_CH' => '🇨🇭',
+            'es_ES' => '🇪🇸', 'es_MX' => '🇲🇽',
+            'it_IT' => '🇮🇹',
+            'pt_PT' => '🇵🇹', 'pt_BR' => '🇧🇷',
+            'nl_NL' => '🇳🇱', 'nl_BE' => '🇧🇪',
+            'ru_RU' => '🇷🇺',
+            'pl_PL' => '🇵🇱',
+            'tr_TR' => '🇹🇷',
+            'sv_SE' => '🇸🇪',
+            'da_DK' => '🇩🇰',
+            'no_NO' => '🇳🇴',
+            'fi_FI' => '🇫🇮',
+            'el_GR' => '🇬🇷',
+            'cs_CZ' => '🇨🇿',
+            'ro_RO' => '🇷🇴',
+            'hu_HU' => '🇭🇺',
+            'bg_BG' => '🇧🇬',
+            'hr_HR' => '🇭🇷',
+            'sk_SK' => '🇸🇰',
+            'sl_SI' => '🇸🇮',
+            'et_EE' => '🇪🇪',
+            'lv_LV' => '🇱🇻',
+            'lt_LT' => '🇱🇹',
+            'uk_UA' => '🇺🇦',
+            'sr_RS' => '🇷🇸',
+            'zh_CN' => '🇨🇳', 'zh_TW' => '🇹🇼',
+            'ja_JP' => '🇯🇵',
+            'ko_KR' => '🇰🇷',
+            'hi_IN' => '🇮🇳',
+            'id_ID' => '🇮🇩',
+            'ms_MY' => '🇲🇾',
+            'th_TH' => '🇹🇭',
+            'vi_VN' => '🇻🇳',
+            'fil_PH' => '🇵🇭',
+            'ar_SA' => '🇸🇦', 'ar_EG' => '🇪🇬',
+            'he_IL' => '🇮🇱',
+            'fa_IR' => '🇮🇷',
+            'ur_PK' => '🇵🇰',
+            'af_ZA' => '🇿🇦',
+            'zu_ZA' => '🇿🇦',
+            'sw_KE' => '🇰🇪',
+
+            // Codes courts (fallback 2 lettres)
+            'en' => '🇬🇧', 'fr' => '🇫🇷', 'de' => '🇩🇪', 'es' => '🇪🇸', 'it' => '🇮🇹',
+            'pt' => '🇵🇹', 'nl' => '🇳🇱', 'ru' => '🇷🇺', 'zh' => '🇨🇳', 'ja' => '🇯🇵',
+            'ar' => '🇸🇦', 'ko' => '🇰🇷', 'tr' => '🇹🇷', 'pl' => '🇵🇱', 'sv' => '🇸🇪',
+            'da' => '🇩🇰', 'no' => '🇳🇴', 'fi' => '🇫🇮', 'el' => '🇬🇷', 'cs' => '🇨🇿',
+            'ro' => '🇷🇴', 'hu' => '🇭🇺', 'bg' => '🇧🇬', 'hr' => '🇭🇷', 'sk' => '🇸🇰',
+            'uk' => '🇺🇦', 'hi' => '🇮🇳', 'id' => '🇮🇩', 'ms' => '🇲🇾', 'th' => '🇹🇭',
+            'vi' => '🇻🇳', 'he' => '🇮🇱', 'fa' => '🇮🇷', 'ur' => '🇵🇰', 'sw' => '🇰🇪',
+        );
+    }
 }
