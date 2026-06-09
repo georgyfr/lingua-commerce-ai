@@ -1,0 +1,3 @@
+# Translation file placeholder for LinguaCommerce AI
+# This directory is used by WordPress to load translation files (.mo/.po)
+# Generated .pot file will be created by tools like wp i18n make-pot

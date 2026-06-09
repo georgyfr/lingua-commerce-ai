@@ -1,0 +1,10 @@
+# LinguaCommerce AI - Git Ignore
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.swo
+*~
+.env
+node_modules/
+.sass-cache/

@@ -1,0 +1,824 @@
+/**
+ * LinguaCommerce AI — Admin Styles
+ * Thème sombre premium avec glassmorphism
+ *
+ * @package    LinguaCommerce_AI
+ * @subpackage LinguaCommerce_AI/admin/css
+ */
+
+/* ============================================================
+   1. VARIABLES & RESET
+   ============================================================ */
+:root {
+    --lingua-bg-dark: #0f1117;
+    --lingua-bg-card: #1a1d2e;
+    --lingua-bg-card-hover: #222640;
+    --lingua-bg-input: #151828;
+    --lingua-border: #2a2e45;
+    --lingua-border-focus: #5b7fff;
+    --lingua-text: #e0e0e8;
+    --lingua-text-muted: #8b8fa8;
+    --lingua-text-dim: #5c6080;
+    --lingua-accent: #5b7fff;
+    --lingua-accent-hover: #7a9aff;
+    --lingua-accent-glow: rgba(91, 127, 255, 0.25);
+    --lingua-success: #34d399;
+    --lingua-warning: #fbbf24;
+    --lingua-danger: #f87171;
+    --lingua-info: #60a5fa;
+    --lingua-glass: rgba(26, 29, 46, 0.7);
+    --lingua-glass-border: rgba(255, 255, 255, 0.06);
+    --lingua-radius: 12px;
+    --lingua-radius-sm: 8px;
+    --lingua-radius-xs: 4px;
+    --lingua-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --lingua-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --lingua-transition: all 0.25s ease;
+}
+
+/* ============================================================
+   2. WRAPPER PRINCIPAL
+   ============================================================ */
+.lingua-admin-wrap {
+    max-width: 1200px;
+    margin: 20px 20px 40px 2px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--lingua-text);
+}
+
+.lingua-admin-wrap h1,
+.lingua-admin-wrap h2,
+.lingua-admin-wrap h3 {
+    color: var(--lingua-text);
+    font-weight: 600;
+}
+
+.lingua-admin-wrap h1 { font-size: 24px; }
+.lingua-admin-wrap h2 { font-size: 20px; }
+.lingua-admin-wrap h3 { font-size: 16px; }
+
+/* ============================================================
+   3. CARTES GLASSMORPHISM
+   ============================================================ */
+.lingua-card,
+.lingua-glass-card {
+    background: var(--lingua-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--lingua-glass-border);
+    border-radius: var(--lingua-radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--lingua-shadow);
+    transition: var(--lingua-transition);
+}
+
+.lingua-card:hover,
+.lingua-glass-card:hover {
+    border-color: rgba(91, 127, 255, 0.15);
+    box-shadow: var(--lingua-shadow), 0 0 20px var(--lingua-accent-glow);
+}
+
+.lingua-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--lingua-border);
+}
+
+.lingua-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lingua-card-body {
+    color: var(--lingua-text-muted);
+    line-height: 1.6;
+}
+
+/* ============================================================
+   4. KPI / STATS CARDS (Dashboard)
+   ============================================================ */
+.lingua-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.lingua-kpi-card {
+    background: var(--lingua-bg-card);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius);
+    padding: 20px;
+    text-align: center;
+    transition: var(--lingua-transition);
+}
+
+.lingua-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--lingua-shadow-sm);
+}
+
+.lingua-kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--lingua-accent);
+    line-height: 1.2;
+}
+
+.lingua-kpi-value.success { color: var(--lingua-success); }
+.lingua-kpi-value.warning { color: var(--lingua-warning); }
+.lingua-kpi-value.danger  { color: var(--lingua-danger); }
+.lingua-kpi-value.info    { color: var(--lingua-info); }
+
+.lingua-kpi-label {
+    font-size: 13px;
+    color: var(--lingua-text-muted);
+    margin-top: 6px;
+}
+
+/* ============================================================
+   5. BARRE DE PROGRESSION
+   ============================================================ */
+.lingua-progress-bar {
+    background: var(--lingua-bg-input);
+    border-radius: 20px;
+    height: 10px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.lingua-progress-fill {
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.6s ease;
+    background: linear-gradient(90deg, var(--lingua-accent), var(--lingua-accent-hover));
+}
+
+.lingua-progress-fill.success { background: linear-gradient(90deg, #059669, var(--lingua-success)); }
+.lingua-progress-fill.warning { background: linear-gradient(90deg, #d97706, var(--lingua-warning)); }
+.lingua-progress-fill.danger  { background: linear-gradient(90deg, #dc2626, var(--lingua-danger)); }
+
+/* ============================================================
+   6. BOUTONS
+   ============================================================ */
+.lingua-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border: 1px solid transparent;
+    border-radius: var(--lingua-radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--lingua-transition);
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+.lingua-btn-primary {
+    background: var(--lingua-accent);
+    color: #fff;
+    border-color: var(--lingua-accent);
+}
+
+.lingua-btn-primary:hover {
+    background: var(--lingua-accent-hover);
+    box-shadow: 0 0 15px var(--lingua-accent-glow);
+    transform: translateY(-1px);
+}
+
+.lingua-btn-secondary {
+    background: transparent;
+    color: var(--lingua-text);
+    border-color: var(--lingua-border);
+}
+
+.lingua-btn-secondary:hover {
+    border-color: var(--lingua-accent);
+    color: var(--lingua-accent);
+}
+
+.lingua-btn-success {
+    background: var(--lingua-success);
+    color: #fff;
+    border-color: var(--lingua-success);
+}
+
+.lingua-btn-success:hover {
+    background: #2fc486;
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.3);
+}
+
+.lingua-btn-danger {
+    background: var(--lingua-danger);
+    color: #fff;
+    border-color: var(--lingua-danger);
+}
+
+.lingua-btn-danger:hover {
+    background: #e05555;
+    box-shadow: 0 0 12px rgba(248, 113, 113, 0.3);
+}
+
+.lingua-btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+.lingua-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   7. FORMULAIRES / INPUTS
+   ============================================================ */
+.lingua-form-group {
+    margin-bottom: 16px;
+}
+
+.lingua-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lingua-text-muted);
+    margin-bottom: 6px;
+}
+
+.lingua-input,
+.lingua-select,
+.lingua-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--lingua-bg-input);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius-sm);
+    color: var(--lingua-text);
+    font-size: 14px;
+    transition: var(--lingua-transition);
+}
+
+.lingua-input:focus,
+.lingua-select:focus,
+.lingua-textarea:focus {
+    outline: none;
+    border-color: var(--lingua-border-focus);
+    box-shadow: 0 0 0 3px var(--lingua-accent-glow);
+}
+
+.lingua-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.lingua-input::placeholder,
+.lingua-textarea::placeholder {
+    color: var(--lingua-text-dim);
+}
+
+/* Toggle Switch */
+.lingua-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.lingua-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.lingua-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--lingua-border);
+    border-radius: 24px;
+    transition: var(--lingua-transition);
+}
+
+.lingua-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: var(--lingua-transition);
+}
+
+.lingua-toggle input:checked + .lingua-toggle-slider {
+    background: var(--lingua-accent);
+}
+
+.lingua-toggle input:checked + .lingua-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* ============================================================
+   8. ONGLETS (Tabs)
+   ============================================================ */
+.lingua-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--lingua-border);
+    margin-bottom: 20px;
+    padding-bottom: 0;
+}
+
+.lingua-tab {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--lingua-text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: 2px solid transparent;
+    border-radius: var(--lingua-radius-sm) var(--lingua-radius-sm) 0 0;
+    cursor: pointer;
+    transition: var(--lingua-transition);
+}
+
+.lingua-tab:hover {
+    color: var(--lingua-text);
+    background: var(--lingua-bg-card-hover);
+}
+
+.lingua-tab.active {
+    color: var(--lingua-accent);
+    border-bottom-color: var(--lingua-accent);
+    background: var(--lingua-bg-card);
+}
+
+.lingua-tab-content {
+    display: none;
+}
+
+.lingua-tab-content.active {
+    display: block;
+}
+
+/* ============================================================
+   9. TABLEAUX
+   ============================================================ */
+.lingua-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius);
+    overflow: hidden;
+}
+
+.lingua-table thead {
+    background: var(--lingua-bg-card);
+}
+
+.lingua-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lingua-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--lingua-border);
+}
+
+.lingua-table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--lingua-border);
+}
+
+.lingua-table tbody tr {
+    background: var(--lingua-bg-dark);
+    transition: var(--lingua-transition);
+}
+
+.lingua-table tbody tr:hover {
+    background: var(--lingua-bg-card-hover);
+}
+
+.lingua-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================================
+   10. BADGES & STATUS
+   ============================================================ */
+.lingua-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.lingua-badge-success {
+    background: rgba(52, 211, 153, 0.15);
+    color: var(--lingua-success);
+}
+
+.lingua-badge-warning {
+    background: rgba(251, 191, 36, 0.15);
+    color: var(--lingua-warning);
+}
+
+.lingua-badge-danger {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--lingua-danger);
+}
+
+.lingua-badge-info {
+    background: rgba(96, 165, 250, 0.15);
+    color: var(--lingua-info);
+}
+
+.lingua-badge-neutral {
+    background: rgba(139, 143, 168, 0.15);
+    color: var(--lingua-text-muted);
+}
+
+/* ============================================================
+   11. MOTEURS IA (Cards)
+   ============================================================ */
+.lingua-engine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.lingua-engine-card {
+    background: var(--lingua-bg-card);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius);
+    padding: 20px;
+    transition: var(--lingua-transition);
+}
+
+.lingua-engine-card:hover {
+    border-color: var(--lingua-accent);
+    box-shadow: 0 0 20px var(--lingua-accent-glow);
+}
+
+.lingua-engine-card.active-engine {
+    border-color: var(--lingua-success);
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.2);
+}
+
+.lingua-engine-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.lingua-engine-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--lingua-text);
+}
+
+/* ============================================================
+   12. DRAPEAUX / LANGUES
+   ============================================================ */
+.lingua-flag-img {
+    width: 24px;
+    height: 18px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+}
+
+.lingua-lang-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--lingua-bg-input);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius-sm);
+    margin-bottom: 8px;
+    transition: var(--lingua-transition);
+}
+
+.lingua-lang-item:hover {
+    border-color: var(--lingua-accent);
+}
+
+.lingua-lang-item.default-lang {
+    border-color: var(--lingua-success);
+    background: rgba(52, 211, 153, 0.05);
+}
+
+/* ============================================================
+   13. MODAL / EDITOR
+   ============================================================ */
+.lingua-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lingua-modal {
+    background: var(--lingua-bg-card);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius);
+    width: 90%;
+    max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.lingua-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--lingua-border);
+}
+
+.lingua-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.lingua-modal-close {
+    background: none;
+    border: none;
+    color: var(--lingua-text-muted);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.lingua-modal-close:hover {
+    color: var(--lingua-danger);
+}
+
+.lingua-modal-body {
+    padding: 24px;
+}
+
+.lingua-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--lingua-border);
+}
+
+/* ============================================================
+   14. QUEUE / FILE D'ATTENTE
+   ============================================================ */
+.lingua-queue-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.lingua-queue-stat {
+    text-align: center;
+    padding: 14px;
+    background: var(--lingua-bg-input);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius-sm);
+}
+
+.lingua-queue-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.lingua-queue-stat-label {
+    font-size: 12px;
+    color: var(--lingua-text-muted);
+    margin-top: 4px;
+}
+
+/* ============================================================
+   15. LOGS / HISTORIQUE
+   ============================================================ */
+.lingua-log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--lingua-border);
+    margin-bottom: 6px;
+    font-size: 13px;
+    background: var(--lingua-bg-input);
+    border-radius: 0 var(--lingua-radius-xs) var(--lingua-radius-xs) 0;
+}
+
+.lingua-log-entry.log-success { border-left-color: var(--lingua-success); }
+.lingua-log-entry.log-warning { border-left-color: var(--lingua-warning); }
+.lingua-log-entry.log-error   { border-left-color: var(--lingua-danger); }
+.lingua-log-entry.log-info    { border-left-color: var(--lingua-info); }
+
+.lingua-log-time {
+    color: var(--lingua-text-dim);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   16. DANGER ZONE
+   ============================================================ */
+.lingua-danger-zone {
+    border: 1px solid var(--lingua-danger);
+    border-radius: var(--lingua-radius);
+    padding: 20px;
+    background: rgba(248, 113, 113, 0.05);
+}
+
+.lingua-danger-zone h3 {
+    color: var(--lingua-danger);
+}
+
+/* ============================================================
+   17. SHORTCUTS / RACCOURCIS (Dashboard)
+   ============================================================ */
+.lingua-shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.lingua-shortcut-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--lingua-bg-card);
+    border: 1px solid var(--lingua-border);
+    border-radius: var(--lingua-radius-sm);
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--lingua-text);
+    transition: var(--lingua-transition);
+}
+
+.lingua-shortcut-card:hover {
+    border-color: var(--lingua-accent);
+    transform: translateY(-1px);
+    box-shadow: var(--lingua-shadow-sm);
+}
+
+.lingua-shortcut-icon {
+    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--lingua-bg-input);
+    border-radius: var(--lingua-radius-sm);
+}
+
+.lingua-shortcut-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ============================================================
+   18. NOTIFICATIONS INLINE
+   ============================================================ */
+.lingua-notice {
+    padding: 12px 16px;
+    border-radius: var(--lingua-radius-sm);
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lingua-notice-success {
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    color: var(--lingua-success);
+}
+
+.lingua-notice-warning {
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: var(--lingua-warning);
+}
+
+.lingua-notice-error {
+    background: rgba(248, 113, 113, 0.1);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: var(--lingua-danger);
+}
+
+.lingua-notice-info {
+    background: rgba(96, 165, 250, 0.1);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    color: var(--lingua-info);
+}
+
+/* ============================================================
+   19. SPINNER / LOADING
+   ============================================================ */
+.lingua-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--lingua-border);
+    border-top-color: var(--lingua-accent);
+    border-radius: 50%;
+    animation: lingua-spin 0.6s linear infinite;
+}
+
+@keyframes lingua-spin {
+    to { transform: rotate(360deg); }
+}
+
+.lingua-loading-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 17, 23, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--lingua-radius);
+    z-index: 10;
+}
+
+/* ============================================================
+   20. UTILITAIRES
+   ============================================================ */
+.lingua-flex { display: flex; }
+.lingua-flex-center { display: flex; align-items: center; justify-content: center; }
+.lingua-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.lingua-gap-8 { gap: 8px; }
+.lingua-gap-12 { gap: 12px; }
+.lingua-gap-16 { gap: 16px; }
+.lingua-mt-8 { margin-top: 8px; }
+.lingua-mt-16 { margin-top: 16px; }
+.lingua-mt-24 { margin-top: 24px; }
+.lingua-mb-8 { margin-bottom: 8px; }
+.lingua-mb-16 { margin-bottom: 16px; }
+.lingua-mb-24 { margin-bottom: 24px; }
+.lingua-text-sm { font-size: 13px; }
+.lingua-text-xs { font-size: 11px; }
+.lingua-text-muted { color: var(--lingua-text-muted); }
+.lingua-text-dim { color: var(--lingua-text-dim); }
+.lingua-text-center { text-align: center; }
+.lingua-text-right { text-align: right; }
+.lingua-w-100 { width: 100%; }
+.lingua-hidden { display: none !important; }
+
+/* ============================================================
+   21. RESPONSIVE
+   ============================================================ */
+@media (max-width: 782px) {
+    .lingua-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .lingua-engine-grid {
+        grid-template-columns: 1fr;
+    }
+    .lingua-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .lingua-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .lingua-queue-stats {
+        grid-template-columns: 1fr;
+    }
+}
