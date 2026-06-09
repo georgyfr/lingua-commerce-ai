@@ -25,6 +25,7 @@ class LinguaCommerce_AI_Admin_Languages {
             add_action( 'wp_ajax_lingua_toggle_language_status', array( $this, 'ajax_toggle_language_status' ) );
             add_action( 'wp_ajax_lingua_set_default_language', array( $this, 'ajax_set_default_language' ) );
             add_action( 'wp_ajax_lingua_delete_language', array( $this, 'ajax_delete_language' ) );
+            add_action( 'wp_ajax_lingua_save_languages', array( $this, 'ajax_save_languages' ) );
             do_action( 'lingua_languages_hooks_registered' );
         }
     }
@@ -68,10 +69,15 @@ class LinguaCommerce_AI_Admin_Languages {
                 $status_class = $is_active ? 'active' : 'inactive';
                 $status_label = $is_active ? 'Actif' : 'Inactif';
                 $status_color = $is_active ? 'green' : 'red';
-                $country_code = strtolower( substr( $lang->code, -2 ) );
-                $flag_img = '<img src="https://flagcdn.com/w40/' . $country_code . '.png" class="lingua-flag" alt="' . esc_attr($lang->code) . '">';
+
+                // Utiliser flag-icons CSS au lieu de flagcdn.com
+                if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+                    require_once plugin_dir_path( __FILE__ ) . 'includes/class-lingua-language-registry.php';
+                }
+                $flag_html = LinguaCommerce_Language_Registry::get_flag( $lang->code, 'sm' );
+
                 $rows_html .= '<tr data-id="' . esc_attr( $lang->id ) . '" data-status="' . esc_attr( $status_class ) . '" data-code="' . esc_attr( $lang->code ) . '" data-name="' . esc_attr( $lang->name ) . '" data-native="' . esc_attr( $lang->native_name ) . '">';
-                $rows_html .= '<td><div style="display:flex; align-items:center;">' . $flag_img . '<div style="margin-left: 10px;"><strong>' . esc_html( $lang->name ) . '</strong><div style="font-size: 12px; color: #666;">' . esc_html( $lang->native_name ) . '</div></div></div></td>';
+                $rows_html .= '<td><div style="display:flex; align-items:center;">' . $flag_html . '<div style="margin-left: 10px;"><strong>' . esc_html( $lang->name ) . '</strong><div style="font-size: 12px; color: #666;">' . esc_html( $lang->native_name ) . '</div></div></div></td>';
                 $rows_html .= '<td><code>' . esc_html( $lang->code ) . '</code></td>';
                 $rows_html .= '<td>' . esc_html( $lang->locale ) . '</td>';
                 $rows_html .= '<td><span class="lingua-badge lingua-badge-' . esc_attr( $status_color ) . '">' . esc_html( $status_label ) . '</span></td>';
@@ -153,6 +159,127 @@ class LinguaCommerce_AI_Admin_Languages {
         if ( $lang->is_default ) wp_send_json_error( 'Impossible de supprimer la langue source.' );
         $this->db->delete( $this->table_name, array( 'id' => $id ), array( '%d' ) );
         wp_send_json_success( 'Langue supprimée' );
+    }
+
+    /**
+     * Sauvegarde en masse les langues actives
+     * Reçoit un tableau de codes langue, désactive ceux qui ne sont pas dans la liste,
+     * active ceux qui y sont, et crée les entrées manquantes depuis le registre.
+     */
+    public function ajax_save_languages() {
+        $this->verify_ajax_request();
+
+        $active_codes = isset( $_POST['languages'] ) ? $_POST['languages'] : array();
+        if ( ! is_array( $active_codes ) ) {
+            $active_codes = array( $active_codes );
+        }
+
+        // Nettoyage des codes reçus
+        $active_codes = array_map( 'sanitize_text_field', $active_codes );
+        $active_codes = array_filter( $active_codes, function( $code ) {
+            return ! empty( $code ) && strlen( $code ) <= 10;
+        });
+
+        if ( empty( $active_codes ) ) {
+            wp_send_json_error( 'Vous devez avoir au moins une langue active.' );
+        }
+
+        // Charger le registre des langues pour récupérer les infos des nouvelles langues
+        if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+            require_once plugin_dir_path( __FILE__ ) . 'includes/class-lingua-language-registry.php';
+        }
+        $registry = LinguaCommerce_Language_Registry::get_all();
+
+        // 1. Récupérer toutes les langues installées
+        $installed = $this->db->get_results( "SELECT id, code, is_active, is_default FROM {$this->table_name}" );
+        $installed_map = array();
+        foreach ( $installed as $lang ) {
+            $installed_map[ $lang->code ] = $lang;
+        }
+
+        $errors = 0;
+        $added = 0;
+        $activated = 0;
+        $deactivated = 0;
+
+        // 2. Traiter les langues déjà installées
+        foreach ( $installed_map as $code => $lang ) {
+            if ( in_array( $code, $active_codes ) ) {
+                // Activer si pas encore actif
+                if ( ! (bool) $lang->is_active ) {
+                    $this->db->update(
+                        $this->table_name,
+                        array( 'is_active' => 1 ),
+                        array( 'id' => $lang->id ),
+                        array( '%d' ),
+                        array( '%d' )
+                    );
+                    $activated++;
+                }
+            } else {
+                // Ne jamais désactiver la langue source (is_default)
+                if ( (bool) $lang->is_default ) {
+                    continue;
+                }
+                // Désactiver si actuellement actif
+                if ( (bool) $lang->is_active ) {
+                    $this->db->update(
+                        $this->table_name,
+                        array( 'is_active' => 0 ),
+                        array( 'id' => $lang->id ),
+                        array( '%d' ),
+                        array( '%d' )
+                    );
+                    $deactivated++;
+                }
+            }
+        }
+
+        // 3. Ajouter et activer les langues qui ne sont pas encore dans la BDD
+        foreach ( $active_codes as $code ) {
+            if ( ! isset( $installed_map[ $code ] ) ) {
+                // Récupérer les infos depuis le registre
+                $lang_data = isset( $registry[ $code ] ) ? $registry[ $code ] : null;
+                $name = $lang_data ? $lang_data['name'] : $code;
+                $native_name = $lang_data ? $lang_data['native_name'] : $code;
+                $locale = $lang_data ? $lang_data['locale'] : $code;
+                $country_code = LinguaCommerce_Language_Registry::get_country_code( $code );
+
+                $result = $this->db->insert(
+                    $this->table_name,
+                    array(
+                        'code'        => $code,
+                        'name'        => $name,
+                        'native_name' => $native_name,
+                        'flag'        => $country_code ? $country_code : '',
+                        'is_active'   => 1,
+                        'is_default'  => 0,
+                        'locale'      => $locale,
+                    ),
+                    array( '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+                );
+
+                if ( $result ) {
+                    $added++;
+                } else {
+                    $errors++;
+                }
+            }
+        }
+
+        // Purger le cache
+        wp_cache_delete( 'lingua_languages', 'lingua' );
+        delete_transient( 'lingua_default_language' );
+
+        $message = sprintf(
+            'Langues sauvegardées : %d activée(s), %d désactivée(s), %d ajoutée(s)%s',
+            $activated,
+            $deactivated,
+            $added,
+            $errors > 0 ? ", {$errors} erreur(s)" : ''
+        );
+
+        wp_send_json_success( $message );
     }
 
     private function get_installed_codes() { $results = $this->db->get_col( "SELECT code FROM {$this->table_name}" ); return $results ? $results : array(); }

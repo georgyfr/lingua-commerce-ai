@@ -50,6 +50,9 @@ class Lingua_Admin_AI {
         $this->table_queue   = $wpdb->prefix . 'lingua_translation_queue';
         $this->table_logs    = $wpdb->prefix . 'lingua_logs';
 
+        // S'assurer que les colonnes manquantes existent dans la table des moteurs
+        $this->ensure_engine_columns();
+
         // Enregistrement unique des hooks AJAX
         if ( ! did_action( 'lingua_ai_hooks_registered' ) ) {
             add_action( 'wp_ajax_lingua_save_engine', array( $this, 'ajax_save_engine' ) );
@@ -61,6 +64,33 @@ class Lingua_Admin_AI {
             add_action( 'wp_ajax_lingua_get_logs', array( $this, 'ajax_get_logs' ) );
             add_action( 'wp_ajax_lingua_clear_logs', array( $this, 'ajax_clear_logs' ) );
             do_action( 'lingua_ai_hooks_registered' );
+        }
+    }
+
+    /**
+     * Vérifie et ajoute les colonnes engine_config, created_at, last_updated
+     * si elles n'existent pas dans la table lingua_ai_engines.
+     * Cela assure la compatibilité sans obliger l'utilisateur à réactiver le plugin.
+     */
+    private function ensure_engine_columns() {
+        global $wpdb;
+        $table = $this->table_engines;
+
+        // Vérifier si la table existe
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) {
+            return;
+        }
+
+        $columns = $wpdb->get_col( "SHOW COLUMNS FROM {$table}", 0 );
+
+        if ( ! in_array( 'engine_config', $columns ) ) {
+            $wpdb->query( "ALTER TABLE {$table} ADD COLUMN engine_config longtext AFTER settings" );
+        }
+        if ( ! in_array( 'created_at', $columns ) ) {
+            $wpdb->query( "ALTER TABLE {$table} ADD COLUMN created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL" );
+        }
+        if ( ! in_array( 'last_updated', $columns ) ) {
+            $wpdb->query( "ALTER TABLE {$table} ADD COLUMN last_updated datetime DEFAULT '0000-00-00 00:00:00' NOT NULL" );
         }
     }
 
@@ -171,9 +201,25 @@ class Lingua_Admin_AI {
             wp_send_json_error( array( 'message' => __( 'Moteur IA introuvable ou inactif.', 'lingua-commerce-ai' ) ) );
         }
 
-        $config = json_decode( $engine->engine_config, true );
+        // engine_config (nouvelle colonne) ou settings (ancienne colonne) comme fallback
+        $config_json = isset( $engine->engine_config ) ? $engine->engine_config : '';
+        if ( empty( $config_json ) && isset( $engine->settings ) ) {
+            $config_json = $engine->settings;
+            $maybe_unserialized = @maybe_unserialize( $config_json );
+            if ( is_array( $maybe_unserialized ) ) {
+                $config = $maybe_unserialized;
+            } else {
+                $config = json_decode( $config_json, true );
+            }
+        } else {
+            $config = json_decode( $config_json, true );
+        }
         if ( ! is_array( $config ) ) {
             $config = array();
+        }
+        // S'assurer que api_key du moteur est dans le config
+        if ( isset( $engine->api_key ) && ! empty( $engine->api_key ) && ! isset( $config['api_key'] ) ) {
+            $config['api_key'] = $engine->api_key;
         }
 
         // Récupérer les instructions personnalisées

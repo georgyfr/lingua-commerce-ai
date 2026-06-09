@@ -63,25 +63,27 @@ class LinguaCommerce_AI_Admin {
      */
     public function enqueue_styles() {
         // Librairie flag-icons pour les drapeaux SVG (compatible Windows)
-        if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
-            require_once plugin_dir_path( __FILE__ ) . 'includes/class-lingua-language-registry.php';
+        // Charger uniquement sur les pages du plugin
+        $screen = get_current_screen();
+        if ( $screen && strpos( $screen->id, 'lingua-commerce-ai' ) !== false ) {
+            // CSS flag-icons depuis CDN
+            wp_enqueue_style(
+                'flag-icons',
+                'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css',
+                array(),
+                '7.2.3'
+            );
+            // CSS custom pour les drapeaux LinguaCommerce
+            $flag_css = '
+                .fi { display: inline-block; width: 1.333em; height: 1em; vertical-align: middle; border-radius: 2px; background-size: cover; }
+                .lingua-flag-sm .fi, .fi.lingua-flag-sm { width: 1em; height: 0.75em; }
+                .lingua-flag-lg .fi, .fi.lingua-flag-lg { width: 2em; height: 1.5em; }
+                .lingua-flag-placeholder { display: inline-flex; align-items: center; justify-content: center; width: 1.333em; height: 1em; background: #ddd; color: #555; font-size: 10px; font-weight: 700; border-radius: 2px; vertical-align: middle; }
+                .lingua-flag-placeholder.lingua-flag-sm { width: 1em; height: 0.75em; font-size: 8px; }
+                .lingua-flag-placeholder.lingua-flag-lg { width: 2em; height: 1.5em; font-size: 12px; }
+            ';
+            wp_add_inline_style( 'flag-icons', $flag_css );
         }
-        wp_enqueue_style(
-            'flag-icons',
-            'https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css',
-            array(),
-            '7.2.3'
-        );
-        // CSS custom pour les drapeaux LinguaCommerce
-        $flag_css = '
-            .fi { display: inline-block; width: 1.333em; height: 1em; vertical-align: middle; border-radius: 2px; background-size: cover; }
-            .lingua-flag-sm .fi, .fi.lingua-flag-sm { width: 1em; height: 0.75em; }
-            .lingua-flag-lg .fi, .fi.lingua-flag-lg { width: 2em; height: 1.5em; }
-            .lingua-flag-placeholder { display: inline-flex; align-items: center; justify-content: center; width: 1.333em; height: 1em; background: #ddd; color: #555; font-size: 10px; font-weight: 700; border-radius: 2px; vertical-align: middle; }
-            .lingua-flag-placeholder.lingua-flag-sm { width: 1em; height: 0.75em; font-size: 8px; }
-            .lingua-flag-placeholder.lingua-flag-lg { width: 2em; height: 1.5em; font-size: 12px; }
-        ';
-        wp_add_inline_style( 'flag-icons', $flag_css );
     }
 
     /**
@@ -869,9 +871,26 @@ class LinguaCommerce_AI_Admin {
             return new WP_Error( 'engine_not_found', __( 'Moteur IA introuvable ou inactif.', 'lingua-commerce-ai' ) );
         }
 
-        $config = json_decode( $engine_row->engine_config, true );
+        // engine_config (nouvelle colonne) ou settings (ancienne colonne) comme fallback
+        $config_json = isset( $engine_row->engine_config ) ? $engine_row->engine_config : '';
+        if ( empty( $config_json ) && isset( $engine_row->settings ) ) {
+            $config_json = $engine_row->settings;
+            // settings peut être serialisé ou JSON
+            $maybe_unserialized = @maybe_unserialize( $config_json );
+            if ( is_array( $maybe_unserialized ) ) {
+                $config = $maybe_unserialized;
+            } else {
+                $config = json_decode( $config_json, true );
+            }
+        } else {
+            $config = json_decode( $config_json, true );
+        }
         if ( ! is_array( $config ) ) {
             $config = array();
+        }
+        // S'assurer que api_key du moteur est dans le config
+        if ( isset( $engine_row->api_key ) && ! empty( $engine_row->api_key ) && ! isset( $config['api_key'] ) ) {
+            $config['api_key'] = $engine_row->api_key;
         }
 
         $source_lang = 'en_US'; // Langue source par défaut

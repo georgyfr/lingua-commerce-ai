@@ -16,7 +16,7 @@ class LinguaCommerce_AI_Activator {
      * Version du schéma de base de données
      * À incrémenter (ex: 1.0.1) si vous modifiez la structure des tables dans le futur.
      */
-    const DB_VERSION = '1.0.1';
+    const DB_VERSION = '1.0.2';
 
     /**
      * Méthode d'activation
@@ -102,6 +102,9 @@ class LinguaCommerce_AI_Activator {
             priority int(11) DEFAULT 10,
             supported_languages longtext,
             settings longtext,
+            engine_config longtext,
+            created_at datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+            last_updated datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
             PRIMARY KEY  (id),
             UNIQUE KEY engine_name (engine_name)
         ) $charset_collate;";
