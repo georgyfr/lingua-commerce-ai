@@ -8,3 +8,9 @@ Thumbs.db
 .env
 node_modules/
 .sass-cache/
+
+# Non-plugin files (should not be in the repo)
+skills/
+upload/
+download/
+db/
