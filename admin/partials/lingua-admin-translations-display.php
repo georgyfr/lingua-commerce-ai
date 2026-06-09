@@ -27,10 +27,10 @@ if ( $current_status !== 'all' ) {
     $where[] = $wpdb->prepare( 't.status = %s', $current_status );
 }
 if ( $current_lang !== 'all' ) {
-    $where[] = $wpdb->prepare( 't.target_lang = %s', $current_lang );
+    $where[] = $wpdb->prepare( 't.language = %s', $current_lang );
 }
 if ( $current_type !== 'all' ) {
-    $where[] = $wpdb->prepare( 't.content_type = %s', $current_type );
+    $where[] = $wpdb->prepare( 't.object_type = %s', $current_type );
 }
 
 $where_clause = implode( ' AND ', $where );
@@ -45,9 +45,9 @@ if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_tra
     $translations = $wpdb->get_results(
         "SELECT t.*, p.post_title as source_title
          FROM {$table_translations} t
-         LEFT JOIN {$wpdb->posts} p ON t.source_id = p.ID
+         LEFT JOIN {$wpdb->posts} p ON t.object_id = p.ID
          WHERE {$where_clause}
-         ORDER BY t.updated_at DESC
+         ORDER BY t.last_updated DESC
          LIMIT {$per_page} OFFSET {$offset}"
     );
 }
@@ -57,14 +57,14 @@ $total_pages = ceil( $total_items / $per_page );
 // Statistiques globales
 $status_counts = array(
     'all'       => 0,
-    'completed' => 0,
+    'validated' => 0,
     'pending'   => 0,
     'processing'=> 0,
     'failed'    => 0,
 );
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
     $status_counts['all']       = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations}" );
-    $status_counts['completed'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE status = 'completed'" );
+    $status_counts['validated'] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE status = 'validated'" );
     $status_counts['pending']   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE status = 'pending'" );
     $status_counts['processing']= (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE status = 'processing'" );
     $status_counts['failed']    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE status = 'failed'" );
@@ -73,18 +73,18 @@ if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_tra
 // Langues disponibles pour le filtre
 $available_langs = array();
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
-    $lang_rows = $wpdb->get_results( "SELECT DISTINCT target_lang FROM {$table_translations} ORDER BY target_lang" );
+    $lang_rows = $wpdb->get_results( "SELECT DISTINCT language FROM {$table_translations} ORDER BY language" );
     foreach ( $lang_rows as $row ) {
-        $available_langs[] = $row->target_lang;
+        $available_langs[] = $row->language;
     }
 }
 
 // Types de contenu disponibles
 $available_types = array();
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
-    $type_rows = $wpdb->get_results( "SELECT DISTINCT content_type FROM {$table_translations} ORDER BY content_type" );
+    $type_rows = $wpdb->get_results( "SELECT DISTINCT object_type FROM {$table_translations} ORDER BY object_type" );
     foreach ( $type_rows as $row ) {
-        $available_types[] = $row->content_type;
+        $available_types[] = $row->object_type;
     }
 }
 
@@ -256,8 +256,8 @@ $type_labels = array(
         border-radius: 50%;
     }
 
-    .lingua-status-badge.status-completed { background: #d1f7d1; color: #047857; }
-    .lingua-status-badge.status-completed .status-dot { background: #00a32a; }
+    .lingua-status-badge.status-validated { background: #d1f7d1; color: #047857; }
+    .lingua-status-badge.status-validated .status-dot { background: #00a32a; }
     .lingua-status-badge.status-pending { background: #fff3cd; color: #856404; }
     .lingua-status-badge.status-pending .status-dot { background: #dba617; }
     .lingua-status-badge.status-processing { background: #d1e4f7; color: #0073aa; }
@@ -582,9 +582,9 @@ $type_labels = array(
            class="lingua-status-tab <?php echo $current_status === 'all' ? 'active' : ''; ?>">
             Tout <span class="tab-count"><?php echo number_format( $status_counts['all'] ); ?></span>
         </a>
-        <a href="<?php echo esc_url( add_query_arg( 'status', 'completed' ) ); ?>"
-           class="lingua-status-tab <?php echo $current_status === 'completed' ? 'active' : ''; ?>">
-            ✅ Complétées <span class="tab-count"><?php echo number_format( $status_counts['completed'] ); ?></span>
+        <a href="<?php echo esc_url( add_query_arg( 'status', 'validated' ) ); ?>"
+           class="lingua-status-tab <?php echo $current_status === 'validated' ? 'active' : ''; ?>">
+            ✅ Complétées <span class="tab-count"><?php echo number_format( $status_counts['validated'] ); ?></span>
         </a>
         <a href="<?php echo esc_url( add_query_arg( 'status', 'pending' ) ); ?>"
            class="lingua-status-tab <?php echo $current_status === 'pending' ? 'active' : ''; ?>">
@@ -667,10 +667,10 @@ $type_labels = array(
             <tbody>
                 <?php if ( ! empty( $translations ) ) : ?>
                     <?php foreach ( $translations as $tr ) :
-                        $short_lang = substr( $tr->target_lang, 0, 2 );
+                        $short_lang = substr( $tr->language, 0, 2 );
                         $flag = isset( $lang_flags[ $short_lang ] ) ? $lang_flags[ $short_lang ] : '🏳️';
-                        $icon = isset( $type_icons[ $tr->content_type ] ) ? $type_icons[ $tr->content_type ] : '📄';
-                        $type_label = isset( $type_labels[ $tr->content_type ] ) ? $type_labels[ $tr->content_type ] : ucfirst( $tr->content_type );
+                        $icon = isset( $type_icons[ $tr->object_type ] ) ? $type_icons[ $tr->object_type ] : '📄';
+                        $type_label = isset( $type_labels[ $tr->object_type ] ) ? $type_labels[ $tr->object_type ] : ucfirst( $tr->object_type );
                         $title = $tr->source_title ? $tr->source_title : '(sans titre)';
                     ?>
                         <tr data-id="<?php echo esc_attr( $tr->id ); ?>">
@@ -690,9 +690,9 @@ $type_labels = array(
                             </td>
                             <td><?php echo esc_html( $flag . ' ' . strtoupper( $short_lang ) ); ?></td>
                             <td><?php echo esc_html( $icon . ' ' . $type_label ); ?></td>
-                            <td><?php echo esc_html( ucfirst( $tr->engine ?? 'ai' ) ); ?></td>
+                            <td><?php echo esc_html( ucfirst( $tr->source ?? 'ai' ) ); ?></td>
                             <td style="font-size:12px; color:#666;">
-                                <?php echo esc_html( date_i18n( 'd/m/Y H:i', strtotime( $tr->updated_at ) ) ); ?>
+                                <?php echo esc_html( date_i18n( 'd/m/Y H:i', strtotime( $tr->last_updated ) ) ); ?>
                             </td>
                             <td>
                                 <button class="button button-small lingua-edit-btn" data-id="<?php echo esc_attr( $tr->id ); ?>">✏️</button>
@@ -719,10 +719,10 @@ $type_labels = array(
         <div class="lingua-masonry-grid">
             <?php if ( ! empty( $translations ) ) : ?>
                 <?php foreach ( $translations as $tr ) :
-                    $short_lang = substr( $tr->target_lang, 0, 2 );
+                    $short_lang = substr( $tr->language, 0, 2 );
                     $flag = isset( $lang_flags[ $short_lang ] ) ? $lang_flags[ $short_lang ] : '🏳️';
                     $title = $tr->source_title ? $tr->source_title : '(sans titre)';
-                    $excerpt = $tr->translated_content ? mb_substr( strip_tags( $tr->translated_content ), 0, 120 ) : 'Pas encore traduit...';
+                    $excerpt = $tr->translated_text ? mb_substr( strip_tags( $tr->translated_text ), 0, 120 ) : 'Pas encore traduit...';
                 ?>
                     <div class="lingua-masonry-item lingua-edit-translation" data-id="<?php echo esc_attr( $tr->id ); ?>">
                         <div class="masonry-header">
@@ -735,8 +735,8 @@ $type_labels = array(
                         </div>
                         <div class="masonry-excerpt"><?php echo esc_html( $excerpt ); ?></div>
                         <div class="masonry-footer">
-                            <span><?php echo esc_html( ucfirst( $tr->content_type ) ); ?></span>
-                            <span><?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $tr->updated_at ) ) ); ?></span>
+                            <span><?php echo esc_html( ucfirst( $tr->object_type ) ); ?></span>
+                            <span><?php echo esc_html( date_i18n( 'd/m/Y', strtotime( $tr->last_updated ) ) ); ?></span>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -756,11 +756,11 @@ $type_labels = array(
             $cascade_groups = array();
             if ( ! empty( $translations ) ) {
                 foreach ( $translations as $tr ) {
-                    $key = $tr->source_id . '_' . $tr->content_type;
+                    $key = $tr->object_id . '_' . $tr->object_type;
                     if ( ! isset( $cascade_groups[ $key ] ) ) {
                         $cascade_groups[ $key ] = array(
                             'title'   => $tr->source_title ? $tr->source_title : '(sans titre)',
-                            'type'    => $tr->content_type,
+                            'type'    => $tr->object_type,
                             'items'   => array(),
                         );
                     }
@@ -771,7 +771,7 @@ $type_labels = array(
             if ( ! empty( $cascade_groups ) ) :
                 foreach ( $cascade_groups as $key => $group ) :
                     $icon = isset( $type_icons[ $group['type'] ] ) ? $type_icons[ $group['type'] ] : '📄';
-                    $completed_count = count( array_filter( $group['items'], function($i) { return $i->status === 'completed'; } ) );
+                    $completed_count = count( array_filter( $group['items'], function($i) { return $i->status === 'validated'; } ) );
                     $total_count = count( $group['items'] );
             ?>
                     <div class="lingua-cascade-group open">
@@ -783,7 +783,7 @@ $type_labels = array(
                         </div>
                         <div class="lingua-cascade-group-body">
                             <?php foreach ( $group['items'] as $tr ) :
-                                $short_lang = substr( $tr->target_lang, 0, 2 );
+                                $short_lang = substr( $tr->language, 0, 2 );
                                 $flag = isset( $lang_flags[ $short_lang ] ) ? $lang_flags[ $short_lang ] : '🏳️';
                             ?>
                                 <div class="lingua-cascade-row" data-id="<?php echo esc_attr( $tr->id ); ?>">
@@ -796,7 +796,7 @@ $type_labels = array(
                                         </span>
                                     </span>
                                     <span style="font-size:12px; color:#999;">
-                                        <?php echo esc_html( ucfirst( $tr->engine ?? 'ai' ) ); ?>
+                                        <?php echo esc_html( ucfirst( $tr->source ?? 'ai' ) ); ?>
                                     </span>
                                     <span class="cascade-actions">
                                         <button class="button button-small lingua-edit-btn" data-id="<?php echo esc_attr( $tr->id ); ?>">✏️ Éditer</button>
@@ -940,16 +940,16 @@ jQuery(document).ready(function($) {
                 if (res.success) {
                     var data = res.data;
                     $('#modal-flag').text(data.flag || '');
-                    $('#modal-lang').text(data.target_lang || '');
-                    $('#modal-type').text(data.content_type || '');
+                    $('#modal-lang').text(data.language || '');
+                    $('#modal-type').text(data.object_type || '');
                     $('#modal-status').html(
                         '<span class="lingua-status-badge status-' + data.status + '">' +
                         '<span class="status-dot"></span>' + data.status + '</span>'
                     );
                     $('#modal-source-lang').text(data.source_lang || 'FR');
-                    $('#modal-target-lang').text(data.target_lang ? data.target_lang.substring(0, 2).toUpperCase() : 'EN');
+                    $('#modal-target-lang').text(data.language ? data.language.substring(0, 2).toUpperCase() : 'EN');
                     $('#modal-source-content').text(data.source_content || 'Pas de contenu source');
-                    $('#modal-translated-content').val(data.translated_content || '');
+                    $('#modal-translated-content').val(data.translated_text || '');
                     updateCounts();
                 }
             }
@@ -1009,7 +1009,7 @@ jQuery(document).ready(function($) {
             },
             success: function(res) {
                 if (res.success) {
-                    $('#modal-translated-content').val(res.data.translated_content);
+                    $('#modal-translated-content').val(res.data.translated_text);
                     btn.html('✅ Traduit !');
                     updateCounts();
                 } else {

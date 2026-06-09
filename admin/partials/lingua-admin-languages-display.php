@@ -74,9 +74,9 @@ if ( empty( $active_language_codes ) ) {
 $lang_stats = array();
 $table_translations = $wpdb->prefix . 'lingua_translations';
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
-    $stats_rows = $wpdb->get_results( "SELECT target_lang, COUNT(*) as cnt FROM {$table_translations} GROUP BY target_lang" );
+    $stats_rows = $wpdb->get_results( "SELECT language, COUNT(*) as cnt FROM {$table_translations} GROUP BY language" );
     foreach ( $stats_rows as $row ) {
-        $short_code = substr( $row->target_lang, 0, 2 );
+        $short_code = substr( $row->language, 0, 2 );
         $lang_stats[ $short_code ] = (int) $row->cnt;
     }
 }

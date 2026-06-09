@@ -48,7 +48,7 @@ $progress_pct   = $total_queue > 0 ? round( ( ( $queue_completed + $queue_proces
 $translations_by_lang = array();
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
     $translations_by_lang = $wpdb->get_results(
-        "SELECT target_lang, COUNT(*) as cnt FROM {$table_translations} GROUP BY target_lang ORDER BY cnt DESC LIMIT 10"
+        "SELECT language, COUNT(*) as cnt FROM {$table_translations} GROUP BY language ORDER BY cnt DESC LIMIT 10"
     );
 }
 
@@ -56,7 +56,7 @@ if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_tra
 $translations_by_type = array();
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
     $translations_by_type = $wpdb->get_results(
-        "SELECT content_type, COUNT(*) as cnt FROM {$table_translations} GROUP BY content_type ORDER BY cnt DESC"
+        "SELECT object_type, COUNT(*) as cnt FROM {$table_translations} GROUP BY object_type ORDER BY cnt DESC"
     );
 }
 
@@ -659,11 +659,11 @@ if ( class_exists( 'LinguaCommerce_Language_Service' ) ) {
                 );
                 foreach ( $translations_by_lang as $item ) :
                     $pct = $max_lang_count > 0 ? round( ( $item->cnt / $max_lang_count ) * 100 ) : 0;
-                    $flag = isset( $lang_flags[ $item->target_lang ] ) ? $lang_flags[ $item->target_lang ] : '🏳️';
+                    $flag = isset( $lang_flags[ $item->language ] ) ? $lang_flags[ $item->language ] : '🏳️';
                 ?>
                     <div class="lingua-lang-bar-item">
                         <span class="lang-flag"><?php echo esc_html( $flag ); ?></span>
-                        <span class="lang-code"><?php echo esc_html( strtoupper( $item->target_lang ) ); ?></span>
+                        <span class="lang-code"><?php echo esc_html( strtoupper( $item->language ) ); ?></span>
                         <div class="lang-bar-track">
                             <div class="lang-bar-fill" style="width: <?php echo esc_attr( $pct ); ?>%;"></div>
                         </div>
@@ -687,13 +687,13 @@ if ( class_exists( 'LinguaCommerce_Language_Service' ) ) {
                     'nav_menu_item' => '📋', 'custom' => '⚙️',
                 );
                 foreach ( $translations_by_type as $item ) :
-                    $icon = isset( $type_icons[ $item->content_type ] ) ? $type_icons[ $item->content_type ] : '📄';
+                    $icon = isset( $type_icons[ $item->object_type ] ) ? $type_icons[ $item->object_type ] : '📄';
                     $type_labels = array(
                         'post' => 'Articles', 'page' => 'Pages', 'product' => 'Produits',
                         'category' => 'Catégories', 'product_cat' => 'Catégories Produit',
                         'tag' => 'Étiquettes', 'product_tag' => 'Étiquettes Produit',
                     );
-                    $label = isset( $type_labels[ $item->content_type ] ) ? $type_labels[ $item->content_type ] : ucfirst( $item->content_type );
+                    $label = isset( $type_labels[ $item->object_type ] ) ? $type_labels[ $item->object_type ] : ucfirst( $item->object_type );
                 ?>
                     <div class="lingua-content-type-item">
                         <div class="type-info">
@@ -735,13 +735,13 @@ if ( class_exists( 'LinguaCommerce_Language_Service' ) ) {
                             <td>
                                 <?php
                                 $title = '';
-                                if ( ! empty( $item->source_id ) ) {
-                                    $title = get_the_title( $item->source_id );
+                                if ( ! empty( $item->object_id ) ) {
+                                    $title = get_the_title( $item->object_id );
                                 }
-                                echo $title ? esc_html( mb_substr( $title, 0, 50 ) ) : esc_html( '#' . $item->source_id );
+                                echo $title ? esc_html( mb_substr( $title, 0, 50 ) ) : esc_html( '#' . $item->object_id );
                                 ?>
                             </td>
-                            <td><?php echo esc_html( strtoupper( $item->target_lang ) ); ?></td>
+                            <td><?php echo esc_html( strtoupper( $item->language ) ); ?></td>
                             <td><?php echo esc_html( ucfirst( $item->engine ?? 'ai' ) ); ?></td>
                             <td style="color: var(--lingua-dark-text-muted); font-size: 12px;">
                                 <?php echo esc_html( date_i18n( 'd/m H:i', strtotime( $item->created_at ) ) ); ?>

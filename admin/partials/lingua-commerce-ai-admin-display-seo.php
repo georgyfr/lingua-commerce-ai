@@ -123,7 +123,7 @@ $table_translations = $wpdb->prefix . 'lingua_translations';
 $seo_translated_count = 0;
 $seo_total_count = 0;
 if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_translations}'" ) === $table_translations ) {
-    $seo_translated_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE content_type IN ('post', 'page', 'product') AND status = 'completed'" );
+    $seo_translated_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table_translations} WHERE object_type IN ('post', 'page', 'product') AND status = 'validated'" );
     $seo_total_count = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ('post', 'page', 'product')" );
 }
 

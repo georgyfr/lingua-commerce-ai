@@ -639,7 +639,7 @@ class Lingua_Admin_AI {
                 array(
                     'engine_config' => $config_json,
                     'status'        => $status,
-                    'updated_at'    => current_time( 'mysql' ),
+                    'last_updated'    => current_time( 'mysql' ),
                 ),
                 array( 'id' => $existing->id ),
                 array( '%s', '%s', '%s' ),
@@ -654,7 +654,7 @@ class Lingua_Admin_AI {
                     'engine_config' => $config_json,
                     'status'        => $status,
                     'created_at'    => current_time( 'mysql' ),
-                    'updated_at'    => current_time( 'mysql' ),
+                    'last_updated'    => current_time( 'mysql' ),
                 ),
                 array( '%s', '%s', '%s', '%s', '%s' )
             );
@@ -1168,7 +1168,7 @@ class Lingua_Admin_AI {
                 'attempts'    => isset( $item->attempts ) ? (int) $item->attempts : 0,
                 'error_message' => isset( $item->error_message ) ? $item->error_message : '',
                 'created_at'  => $item->created_at,
-                'updated_at'  => isset( $item->updated_at ) ? $item->updated_at : '',
+                'last_updated'  => isset( $item->last_updated ) ? $item->last_updated : '',
             );
         }
 
