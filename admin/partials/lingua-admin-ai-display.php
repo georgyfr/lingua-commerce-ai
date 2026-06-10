@@ -844,6 +844,42 @@ jQuery(document).ready(function($) {
         }
     });
 
+    // Fonction utilitaire : rafraîchir le nonce si expiré
+    function refreshNonce(callback) {
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: { action: 'lingua_refresh_nonce', nonce: nonce },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success && res.data.nonce) {
+                    nonce = res.data.nonce;
+                }
+                if (callback) callback();
+            },
+            error: function() {
+                if (callback) callback();
+            }
+        });
+    }
+
+    // Fonction utilitaire : message d'erreur AJAX détaillé
+    function getAjaxErrorMessage(xhr, status, error) {
+        if (xhr.status === 403) {
+            return '❌ Session expirée. Rechargez la page et réessayez.';
+        }
+        if (xhr.status === 500) {
+            return '❌ Erreur interne du serveur (500). Consultez les logs WordPress.';
+        }
+        if (status === 'parsererror') {
+            return '❌ Réponse serveur invalide (JSON corrompu). Vérifiez les erreurs PHP.';
+        }
+        if (status === 'timeout') {
+            return '❌ Délai d\'attente dépassé. Le serveur met trop de temps à répondre.';
+        }
+        return '❌ Erreur serveur (' + (xhr.status || 'inconnu') + '). Vérifiez votre connexion et les logs.';
+    }
+
     // Test API key (bouton Tester dans la section Clés API)
     $('.lingua-test-key-btn').on('click', function() {
         var btn = $(this);
@@ -855,6 +891,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: ajaxurl,
             type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'lingua_test_api_key',
                 engine: engine,
@@ -870,8 +907,16 @@ jQuery(document).ready(function($) {
                     alert(msg);
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
                 btn.text('❌ Erreur').css('color', 'red');
+                // Si nonce expiré, tenter un rafraîchissement
+                if (xhr.status === 403) {
+                    refreshNonce(function() {
+                        btn.prop('disabled', false).text('🧪 Tester').css('color', '');
+                    });
+                } else {
+                    console.error('AJAX Error (test_api_key):', status, error, xhr.status, xhr.responseText);
+                }
             },
             complete: function() {
                 setTimeout(function() {
@@ -901,6 +946,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: ajaxurl,
             type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'lingua_test_translate',
                 engine: engine,
@@ -918,8 +964,15 @@ jQuery(document).ready(function($) {
                     outputDiv.html('<span style="color:#d63638;">❌ ' + msg + '</span>');
                 }
             },
-            error: function() {
-                outputDiv.html('<span style="color:#d63638;">❌ Erreur serveur. Vérifiez votre connexion.</span>');
+            error: function(xhr, status, error) {
+                outputDiv.html('<span style="color:#d63638;">' + getAjaxErrorMessage(xhr, status, error) + '</span>');
+                console.error('AJAX Error (test_translate):', status, error, xhr.status, xhr.responseText);
+                // Si nonce expiré (403), rafraîchir automatiquement
+                if (xhr.status === 403) {
+                    refreshNonce(function() {
+                        outputDiv.append('<br><span style="color:#2271b1; font-size:11px;">🔄 Session rafraîchie. Réessayez maintenant.</span>');
+                    });
+                }
             },
             complete: function() {
                 btn.prop('disabled', false).html('🌍 Traduire');

@@ -71,6 +71,7 @@ class Lingua_Admin_AI {
             add_action( 'wp_ajax_lingua_retry_failed', array( $this, 'ajax_retry_failed' ) );
             add_action( 'wp_ajax_lingua_clear_queue', array( $this, 'ajax_clear_queue' ) );
             add_action( 'wp_ajax_lingua_test_translate', array( $this, 'ajax_test_translate' ) );
+            add_action( 'wp_ajax_lingua_refresh_nonce', array( $this, 'ajax_refresh_nonce' ) );
             do_action( 'lingua_ai_hooks_registered' );
         }
     }
@@ -1407,8 +1408,12 @@ class Lingua_Admin_AI {
      * Récupère la clé depuis le champ input du formulaire ou la config sauvegardée.
      */
     public function ajax_test_api_key() {
+        // Capturer tout output parasite (warnings PHP, notices) qui corromprait le JSON
+        ob_start();
+
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1494,6 +1499,9 @@ class Lingua_Admin_AI {
 
         $latency_ms = round( ( microtime( true ) - $start_time ) * 1000 );
 
+        // Nettoyer tout output parasite avant d'envoyer le JSON
+        ob_end_clean();
+
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( array(
                 'message'  => $result->get_error_message(),
@@ -1509,6 +1517,22 @@ class Lingua_Admin_AI {
                 __( 'Connexion réussie ! Latence : %d ms', 'lingua-commerce-ai' ),
                 $latency_ms
             ),
+        ) );
+    }
+
+    /**
+     * Rafraîchit le nonce AJAX pour éviter les erreurs de session expirée
+     */
+    public function ajax_refresh_nonce() {
+        // Pas de vérification de nonce stricte ici — on utilise une vérification souple
+        // car le but est précisément de rafraîchir un nonce qui pourrait être expiré
+        $old_nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( $_POST['nonce'] ) : '';
+        if ( empty( $old_nonce ) || ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
+        }
+
+        wp_send_json_success( array(
+            'nonce' => wp_create_nonce( 'lingua_admin_nonce' ),
         ) );
     }
 
@@ -1727,8 +1751,12 @@ class Lingua_Admin_AI {
      * Ne nécessite PAS que le moteur soit dans la table lingua_ai_engines.
      */
     public function ajax_test_translate() {
+        // Capturer tout output parasite (warnings PHP, notices) qui corromprait le JSON
+        ob_start();
+
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1738,6 +1766,7 @@ class Lingua_Admin_AI {
         $source_lang = isset( $_POST['source_lang'] ) ? sanitize_text_field( $_POST['source_lang'] ) : 'en_US';
 
         if ( empty( $engine_slug ) || empty( $text ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Moteur et texte requis.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1747,6 +1776,9 @@ class Lingua_Admin_AI {
         $start_time = microtime( true );
         $result = $this->do_engine_translate( $engine_slug, $config, $text, $source_lang, $target_lang );
         $latency_ms = round( ( microtime( true ) - $start_time ) * 1000 );
+
+        // Nettoyer tout output parasite avant d'envoyer le JSON
+        ob_end_clean();
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( array(
@@ -1993,17 +2025,49 @@ class Lingua_Admin_AI {
                     'body'    => wp_json_encode( $chat_body ),
                 ) );
                 if ( is_wp_error( $response ) ) {
-                    return new WP_Error( 'request_error', $response->get_error_message() );
+                    // Log l'erreur de connexion pour le débogage
+                    error_log( sprintf( '[Lingua AI] Erreur connexion %s : %s', $engine_slug, $response->get_error_message() ) );
+                    return new WP_Error( 'request_error', sprintf(
+                        /* translators: 1: Engine name 2: Error message */
+                        __( 'Erreur de connexion à %1$s : %2$s', 'lingua-commerce-ai' ),
+                        ucfirst( $engine_slug ),
+                        $response->get_error_message()
+                    ) );
                 }
-                $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                $http_code = wp_remote_retrieve_response_code( $response );
+                $raw_body  = wp_remote_retrieve_body( $response );
+                $body = json_decode( $raw_body, true );
+
+                // Log la réponse HTTP si elle n'est pas 200
+                if ( 200 !== $http_code ) {
+                    error_log( sprintf( '[Lingua AI] %s a retourné HTTP %d : %s', $engine_slug, $http_code, $raw_body ) );
+                }
+
                 if ( isset( $body['choices'][0]['message']['content'] ) ) {
                     return $this->clean_ai_output( trim( $body['choices'][0]['message']['content'] ) );
                 } elseif ( isset( $body['error']['message'] ) ) {
-                    return new WP_Error( 'api_error', $body['error']['message'] );
+                    return new WP_Error( 'api_error', sprintf(
+                        /* translators: 1: Engine name 2: API error message */
+                        __( 'Erreur API %1$s : %2$s', 'lingua-commerce-ai' ),
+                        ucfirst( $engine_slug ),
+                        $body['error']['message']
+                    ) );
                 } elseif ( isset( $body['message'] ) ) {
-                    return new WP_Error( 'api_error', $body['message'] );
+                    return new WP_Error( 'api_error', sprintf(
+                        /* translators: 1: Engine name 2: API error message */
+                        __( 'Erreur API %1$s : %2$s', 'lingua-commerce-ai' ),
+                        ucfirst( $engine_slug ),
+                        $body['message']
+                    ) );
                 }
-                return new WP_Error( 'invalid_response', sprintf( __( 'Réponse %s invalide.', 'lingua-commerce-ai' ), ucfirst( $engine_slug ) ) );
+                // Log la réponse brute pour le débogage si le format est inattendu
+                error_log( sprintf( '[Lingua AI] Réponse %s inattendue (HTTP %d) : %s', $engine_slug, $http_code, substr( $raw_body, 0, 500 ) ) );
+                return new WP_Error( 'invalid_response', sprintf(
+                    /* translators: 1: Engine name 2: HTTP status code */
+                    __( 'Réponse %1$s invalide (HTTP %2$d). Vérifiez les logs WordPress pour plus de détails.', 'lingua-commerce-ai' ),
+                    ucfirst( $engine_slug ),
+                    $http_code
+                ) );
 
             default:
                 return new WP_Error( 'unsupported', sprintf( __( 'Moteur "%s" non supporté.', 'lingua-commerce-ai' ), $engine_slug ) );

@@ -1,16 +1,2 @@
-# LinguaCommerce AI - Git Ignore
-.DS_Store
-Thumbs.db
-*.log
-*.swp
-*.swo
-*~
-.env
-node_modules/
-.sass-cache/
-
-# Non-plugin files (should not be in the repo)
 skills/
-upload/
-download/
-db/
+node_modules/
