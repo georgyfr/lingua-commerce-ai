@@ -496,11 +496,26 @@ if ( file_exists( $log_file ) ) {
     <h1>🤖 IA & Automatisation</h1>
     <p class="ai-subtitle">Configurez les moteurs de traduction IA, gérez la file d'attente et surveillez les journaux.</p>
 
-    <!-- ENGINE CARDS -->
+    <!-- ENGINE CARDS WITH INLINE TRANSLATION TEST -->
+    <?php
+    // Langues pour le menu déroulant
+    $test_languages = array(
+        'fr_FR' => 'Français', 'es_ES' => 'Espagnol', 'de_DE' => 'Allemand',
+        'it_IT' => 'Italien', 'pt_BR' => 'Portugais (Brésil)', 'nl_NL' => 'Néerlandais',
+        'ru_RU' => 'Russe', 'ja_JA' => 'Japonais', 'ko_KR' => 'Coréen',
+        'zh_CN' => 'Chinois (simplifié)', 'ar_AR' => 'Arabe', 'tr_TR' => 'Turc',
+        'pl_PL' => 'Polonais', 'sv_SE' => 'Suédois', 'da_DK' => 'Danois',
+        'fi_FI' => 'Finnois', 'el_GR' => 'Grec', 'cs_CZ' => 'Tchèque',
+        'ro_RO' => 'Roumain', 'hu_HU' => 'Hongrois', 'bg_BG' => 'Bulgare',
+        'uk_UA' => 'Ukrainien', 'th_TH' => 'Thaï', 'vi_VN' => 'Vietnamien',
+        'id_ID' => 'Indonésien', 'en_US' => 'Anglais', 'en_GB' => 'Anglais (UK)',
+    );
+    ?>
     <div class="lingua-engines-grid">
         <?php foreach ( $engines as $slug => $engine ) :
             $is_primary = ( $primary_engine === $slug );
             $key_set = ! empty( $api_keys[ $slug ] );
+            $can_test = ( isset( $engine['free'] ) && $engine['free'] ) || $key_set;
         ?>
             <div class="lingua-engine-card <?php echo $is_primary ? 'is-primary' : ''; ?>"
                  style="--engine-color: <?php echo esc_attr( $engine['color'] ); ?>; --engine-gradient: <?php echo esc_attr( $engine['gradient'] ); ?>"
@@ -521,6 +536,9 @@ if ( file_exists( $log_file ) ) {
                 <div class="engine-badges">
                     <span class="engine-badge">🗣️ <?php echo esc_html( $engine['lang_support'] ); ?></span>
                     <span class="engine-badge">💰 <?php echo esc_html( $engine['cost'] ); ?></span>
+                    <?php if ( isset( $engine['free'] ) && $engine['free'] ) : ?>
+                        <span class="engine-badge" style="background:#d1fae5; color:#047857; font-weight:700;">✅ Gratuit</span>
+                    <?php endif; ?>
                 </div>
                 <div class="engine-meter">
                     <div class="engine-meter-label">
@@ -558,6 +576,41 @@ if ( file_exists( $log_file ) ) {
                     <a href="<?php echo esc_url( $engine['docs_url'] ); ?>" target="_blank" class="button button-small" style="text-decoration:none;">
                         📖 Docs
                     </a>
+                </div>
+
+                <!-- INLINE TRANSLATION TEST -->
+                <div class="lingua-inline-test" style="margin-top:12px; border-top:1px dashed #ddd; padding-top:10px;">
+                    <div style="font-size:12px; font-weight:600; margin-bottom:6px; color:<?php echo esc_attr( $engine['color'] ); ?>;">
+                        🧪 Tester la traduction
+                    </div>
+                    <input type="text"
+                           class="lingua-test-input"
+                           data-engine="<?php echo esc_attr( $slug ); ?>"
+                           placeholder="Entrez un texte à traduire..."
+                           style="width:100%; padding:6px 8px; font-size:12px; border:1px solid #ddd; border-radius:4px; margin-bottom:6px; box-sizing:border-box;"
+                           <?php echo ! $can_test ? 'disabled title="Clé API requise pour tester"' : ''; ?>>
+                    <div style="display:flex; gap:6px; margin-bottom:6px;">
+                        <select class="lingua-test-lang"
+                                data-engine="<?php echo esc_attr( $slug ); ?>"
+                                style="flex:1; padding:5px 6px; font-size:12px; border:1px solid #ddd; border-radius:4px;"
+                                <?php echo ! $can_test ? 'disabled' : ''; ?>>
+                            <?php foreach ( $test_languages as $code => $name ) : ?>
+                                <option value="<?php echo esc_attr( $code ); ?>" <?php selected( $code, 'fr_FR' ); ?>><?php echo esc_html( $name ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button type="button"
+                                class="button button-small lingua-inline-translate-btn"
+                                data-engine="<?php echo esc_attr( $slug ); ?>"
+                                style="background:<?php echo esc_attr( $engine['color'] ); ?>; color:#fff; border:none; font-size:11px; white-space:nowrap;"
+                                <?php echo ! $can_test ? 'disabled' : ''; ?>>
+                            🌍 Traduire
+                        </button>
+                    </div>
+                    <div class="lingua-test-output"
+                         data-engine="<?php echo esc_attr( $slug ); ?>"
+                         style="min-height:28px; padding:6px 8px; font-size:12px; background:#f8f9fa; border:1px solid #e9ecef; border-radius:4px; color:#333; word-wrap:break-word;">
+                        <span style="color:#aaa; font-style:italic;">La traduction apparaîtra ici...</span>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -791,17 +844,12 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Test API key
+    // Test API key (bouton Tester dans la section Clés API)
     $('.lingua-test-key-btn').on('click', function() {
         var btn = $(this);
         var engine = btn.data('engine');
         var input = $('input[data-engine="' + engine + '"]');
-        var apiKey = input.val();
-
-        if (!apiKey) {
-            alert('Veuillez entrer une clé API avant de tester.');
-            return;
-        }
+        var apiKey = input.val() || '';
 
         btn.prop('disabled', true).text('⏳ Test...');
         $.ajax({
@@ -817,7 +865,9 @@ jQuery(document).ready(function($) {
                 if (res.success) {
                     btn.text('✅ OK').css('color', 'green');
                 } else {
+                    var msg = (res.data && res.data.message) ? res.data.message : 'Échec';
                     btn.text('❌ Échec').css('color', 'red');
+                    alert(msg);
                 }
             },
             error: function() {
@@ -829,6 +879,60 @@ jQuery(document).ready(function($) {
                 }, 3000);
             }
         });
+    });
+
+    // Inline translate button (dans chaque carte moteur)
+    $(document).on('click', '.lingua-inline-translate-btn', function() {
+        var btn = $(this);
+        var engine = btn.data('engine');
+        var card = btn.closest('.lingua-engine-card');
+        var text = card.find('.lingua-test-input').val();
+        var targetLang = card.find('.lingua-test-lang').val();
+        var outputDiv = card.find('.lingua-test-output');
+
+        if (!text || !text.trim()) {
+            outputDiv.html('<span style="color:#d63638;">⚠️ Veuillez entrer un texte à traduire.</span>');
+            return;
+        }
+
+        btn.prop('disabled', true).html('⏳...');
+        outputDiv.html('<span style="color:#2271b1;">⏳ Traduction en cours...</span>');
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'lingua_test_translate',
+                engine: engine,
+                text: text,
+                target_lang: targetLang,
+                source_lang: 'en_US',
+                nonce: nonce
+            },
+            success: function(res) {
+                if (res.success) {
+                    var latency = res.data.latency ? ' <span style="color:#888; font-size:10px;">(' + res.data.latency + ' ms)</span>' : '';
+                    outputDiv.html('<span style="color:#00a32a;">✅</span> ' + res.data.translated_text + latency);
+                } else {
+                    var msg = (res.data && res.data.message) ? res.data.message : 'Erreur inconnue';
+                    outputDiv.html('<span style="color:#d63638;">❌ ' + msg + '</span>');
+                }
+            },
+            error: function() {
+                outputDiv.html('<span style="color:#d63638;">❌ Erreur serveur. Vérifiez votre connexion.</span>');
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('🌍 Traduire');
+            }
+        });
+    });
+
+    // Allow Enter key to trigger translation
+    $(document).on('keypress', '.lingua-test-input', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $(this).closest('.lingua-engine-card').find('.lingua-inline-translate-btn').trigger('click');
+        }
     });
 
     // Set primary engine
@@ -870,6 +974,8 @@ jQuery(document).ready(function($) {
             success: function(res) {
                 if (res.success) {
                     $('#lingua-api-keys-status').text('✅ Clés sauvegardées !').css('color', 'green');
+                    // Recharger après un court délai pour mettre à jour les statuts des cartes
+                    setTimeout(function() { location.reload(); }, 1200);
                 } else {
                     $('#lingua-api-keys-status').text('❌ Erreur').css('color', 'red');
                 }
@@ -894,9 +1000,9 @@ jQuery(document).ready(function($) {
             data: { action: 'lingua_trigger_queue', nonce: nonce },
             success: function(res) {
                 if (res.success) {
-                    $('#queue-action-status').text('✅ File d\'attente traitée !');
+                    $('#queue-action-status').text('✅ ' + res.data.message);
                 } else {
-                    $('#queue-action-status').text('❌ ' + res.data);
+                    $('#queue-action-status').text('❌ ' + (res.data && res.data.message ? res.data.message : 'Erreur'));
                 }
             },
             complete: function() {
@@ -914,7 +1020,7 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: { action: 'lingua_retry_failed', nonce: nonce },
             success: function(res) {
-                $('#queue-action-status').text(res.success ? '✅ Échecs relancés !' : '❌ Erreur');
+                $('#queue-action-status').text(res.success ? '✅ ' + res.data.message : '❌ Erreur');
                 setTimeout(function() { location.reload(); }, 1500);
             }
         });
@@ -927,7 +1033,7 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: { action: 'lingua_clear_queue', nonce: nonce },
             success: function(res) {
-                $('#queue-action-status').text(res.success ? '✅ File vidée !' : '❌ Erreur');
+                $('#queue-action-status').text(res.success ? '✅ ' + res.data.message : '❌ Erreur');
                 setTimeout(function() { location.reload(); }, 1500);
             }
         });
