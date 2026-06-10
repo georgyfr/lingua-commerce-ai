@@ -484,17 +484,19 @@ class Lingua_Admin_AI {
                 break;
 
             // -----------------------------------------------------------------
-            // LLM : OPENROUTER, DEEPSEEK, MISTRAL, OPENAI
+            // LLM : OPENROUTER, DEEPSEEK, MISTRAL, OPENAI, Z.AI
             // (Tous utilisent l'API Chat Completions)
             // -----------------------------------------------------------------
             case 'openrouter':
             case 'deepseek':
             case 'mistral':
             case 'openai':
+            case 'zai':
                 $api_key = isset( $config['api_key'] ) ? $config['api_key'] : '';
                 $model   = isset( $config['model'] ) ? $config['model'] : $this->get_default_llm_model( $engine_slug );
 
-                if ( empty( $api_key ) ) {
+                // Z.AI est gratuit — pas de clé API obligatoire
+                if ( empty( $api_key ) && 'zai' !== $engine_slug ) {
                     $error_message = sprintf(
                         /* translators: %s: Engine name */
                         __( 'Clé API %s manquante.', 'lingua-commerce-ai' ),
@@ -524,11 +526,21 @@ class Lingua_Admin_AI {
 
                 $chat_headers = array(
                     'Content-Type'  => 'application/json',
-                    'Authorization' => 'Bearer ' . $api_key,
                 );
+
+                // Ajouter Authorization seulement si une clé API est disponible
+                if ( ! empty( $api_key ) ) {
+                    $chat_headers['Authorization'] = 'Bearer ' . $api_key;
+                }
 
                 // OpenRouter nécessite des headers supplémentaires
                 if ( 'openrouter' === $engine_slug ) {
+                    $chat_headers['HTTP-Referer'] = home_url();
+                    $chat_headers['X-Title']      = get_bloginfo( 'name' ) . ' - LinguaCommerce AI';
+                }
+
+                // Z.AI headers supplémentaires
+                if ( 'zai' === $engine_slug ) {
                     $chat_headers['HTTP-Referer'] = home_url();
                     $chat_headers['X-Title']      = get_bloginfo( 'name' ) . ' - LinguaCommerce AI';
                 }
@@ -1012,16 +1024,18 @@ class Lingua_Admin_AI {
                 break;
 
             // -----------------------------------------------------------------
-            // LLM : OPENROUTER, DEEPSEEK, MISTRAL, OPENAI
+            // LLM : OPENROUTER, DEEPSEEK, MISTRAL, OPENAI, Z.AI
             // -----------------------------------------------------------------
             case 'openrouter':
             case 'deepseek':
             case 'mistral':
             case 'openai':
+            case 'zai':
                 $api_key = isset( $config['api_key'] ) ? sanitize_text_field( $config['api_key'] ) : '';
                 $model   = isset( $config['model'] ) ? sanitize_text_field( $config['model'] ) : $this->get_default_llm_model( $engine_slug );
 
-                if ( empty( $api_key ) ) {
+                // Z.AI est gratuit — pas de clé API obligatoire
+                if ( empty( $api_key ) && 'zai' !== $engine_slug ) {
                     $error_message = sprintf( __( 'Clé API %s manquante.', 'lingua-commerce-ai' ), ucfirst( $engine_slug ) );
                     break;
                 }
@@ -1047,10 +1061,19 @@ class Lingua_Admin_AI {
 
                 $chat_headers = array(
                     'Content-Type'  => 'application/json',
-                    'Authorization' => 'Bearer ' . $api_key,
                 );
 
+                // Ajouter Authorization seulement si une clé API est disponible
+                if ( ! empty( $api_key ) ) {
+                    $chat_headers['Authorization'] = 'Bearer ' . $api_key;
+                }
+
                 if ( 'openrouter' === $engine_slug ) {
+                    $chat_headers['HTTP-Referer'] = home_url();
+                    $chat_headers['X-Title']      = get_bloginfo( 'name' ) . ' - LinguaCommerce AI';
+                }
+
+                if ( 'zai' === $engine_slug ) {
                     $chat_headers['HTTP-Referer'] = home_url();
                     $chat_headers['X-Title']      = get_bloginfo( 'name' ) . ' - LinguaCommerce AI';
                 }
@@ -1576,6 +1599,7 @@ class Lingua_Admin_AI {
             'deepseek'   => 'https://api.deepseek.com/v1/chat/completions',
             'mistral'    => 'https://api.mistral.ai/v1/chat/completions',
             'openai'     => 'https://api.openai.com/v1/chat/completions',
+            'zai'        => 'https://api.zai.chat/v1/chat/completions',
         );
 
         return isset( $endpoints[ $engine ] ) ? $endpoints[ $engine ] : '';
@@ -1593,6 +1617,7 @@ class Lingua_Admin_AI {
             'deepseek'   => 'deepseek-chat',
             'mistral'    => 'mistral-small-latest',
             'openai'     => 'gpt-3.5-turbo',
+            'zai'        => 'glm-4-flash',
         );
 
         return isset( $models[ $engine ] ) ? $models[ $engine ] : 'gpt-3.5-turbo';

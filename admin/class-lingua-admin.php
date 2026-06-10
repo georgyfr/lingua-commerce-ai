@@ -487,6 +487,7 @@ class LinguaCommerce_AI_Admin {
         echo '<div style="background: #fff; border: 1px solid #ccd0d4; padding: 25px; border-radius: 4px;">';
         echo '<h3 style="margin-top: 0;">🤖 ' . esc_html__( 'Moteurs IA supportés', 'lingua-commerce-ai' ) . '</h3>';
         echo '<ul>';
+        echo '<li><strong>Z.AI</strong> — ' . esc_html__( 'Moteur IA gratuit, traduction illimitee sans frais', 'lingua-commerce-ai' ) . '</li>';
         echo '<li><strong>DeepL</strong> — ' . esc_html__( 'Haute qualité, idéal pour l\'européen', 'lingua-commerce-ai' ) . '</li>';
         echo '<li><strong>Yandex Cloud</strong> — ' . esc_html__( 'Excellent pour les langues slaves', 'lingua-commerce-ai' ) . '</li>';
         echo '<li><strong>Baidu</strong> — ' . esc_html__( 'Spécialiste chinois, signature MD5', 'lingua-commerce-ai' ) . '</li>';

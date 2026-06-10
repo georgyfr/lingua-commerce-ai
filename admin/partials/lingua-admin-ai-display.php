@@ -25,6 +25,7 @@ $rate_limit       = isset( $ai_settings['rate_limit'] ) ? $ai_settings['rate_lim
 
 // Clés API
 $api_keys = array(
+    'zai'         => isset( $ai_settings['api_key_zai'] ) ? $ai_settings['api_key_zai'] : '',
     'openrouter'  => isset( $ai_settings['api_key_openrouter'] ) ? $ai_settings['api_key_openrouter'] : '',
     'deepseek'    => isset( $ai_settings['api_key_deepseek'] ) ? $ai_settings['api_key_deepseek'] : '',
     'deepl'       => isset( $ai_settings['api_key_deepl'] ) ? $ai_settings['api_key_deepl'] : '',
@@ -35,8 +36,22 @@ $api_keys = array(
     'microsoft'   => isset( $ai_settings['api_key_microsoft'] ) ? $ai_settings['api_key_microsoft'] : '',
 );
 
-// Définition des 8 moteurs
+// Définition des 9 moteurs
 $engines = array(
+    'zai' => array(
+        'name'        => 'Z.AI',
+        'icon'        => '⚡',
+        'desc'        => 'Moteur IA gratuit par Z.ai — traduction illimitée, sans frais, idéale pour démarrer',
+        'color'       => '#10b981',
+        'gradient'    => 'linear-gradient(135deg, #059669, #34d399)',
+        'type'        => 'llm',
+        'lang_support' => '55+ langues',
+        'quality'     => 85,
+        'speed'       => 90,
+        'cost'        => 'Gratuit',
+        'docs_url'    => 'https://z.ai/docs',
+        'free'        => true,
+    ),
     'openrouter' => array(
         'name'        => 'OpenRouter',
         'icon'        => '🤖',
@@ -526,7 +541,9 @@ if ( file_exists( $log_file ) ) {
                     </div>
                 </div>
                 <div class="engine-key-status">
-                    <?php if ( $key_set ) : ?>
+                    <?php if ( isset( $engine['free'] ) && $engine['free'] ) : ?>
+                        <span class="key-set" style="background:#d1fae5; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; color:#047857;">✅ GRATUIT — Aucune clé requise</span>
+                    <?php elseif ( $key_set ) : ?>
                         <span class="key-set">✅ Clé API configurée</span>
                     <?php else : ?>
                         <span class="key-missing">⚠️ Clé API manquante</span>
@@ -557,13 +574,21 @@ if ( file_exists( $log_file ) ) {
                 <div class="lingua-api-key-row">
                     <span class="key-engine-icon"><?php echo esc_html( $engine['icon'] ); ?></span>
                     <span class="key-engine-name"><?php echo esc_html( $engine['name'] ); ?></span>
-                    <input type="password"
-                           name="lingua_commerce_ai_ai_settings[api_key_<?php echo esc_attr( $slug ); ?>]"
-                           value="<?php echo esc_attr( $api_keys[ $slug ] ); ?>"
-                           placeholder="Entrez votre clé API..."
-                           class="regular-text"
-                           data-engine="<?php echo esc_attr( $slug ); ?>">
-                    <span class="key-toggle-vis" data-target='input[data-engine="<?php echo esc_attr( $slug ); ?>"]'>👁️</span>
+                    <?php if ( isset( $engine['free'] ) && $engine['free'] ) : ?>
+                        <input type="hidden"
+                               name="lingua_commerce_ai_ai_settings[api_key_<?php echo esc_attr( $slug ); ?>]"
+                               value="free"
+                               data-engine="<?php echo esc_attr( $slug ); ?>">
+                        <span style="color:#047857; font-weight:600; font-size:13px; flex:1;">✅ Gratuit — Aucune clé nécessaire</span>
+                    <?php else : ?>
+                        <input type="password"
+                               name="lingua_commerce_ai_ai_settings[api_key_<?php echo esc_attr( $slug ); ?>]"
+                               value="<?php echo esc_attr( $api_keys[ $slug ] ); ?>"
+                               placeholder="Entrez votre clé API..."
+                               class="regular-text"
+                               data-engine="<?php echo esc_attr( $slug ); ?>">
+                        <span class="key-toggle-vis" data-target='input[data-engine="<?php echo esc_attr( $slug ); ?>"]'>👁️</span>
+                    <?php endif; ?>
                     <button type="button" class="button button-small lingua-test-key-btn" data-engine="<?php echo esc_attr( $slug ); ?>">
                         🧪 Tester
                     </button>
