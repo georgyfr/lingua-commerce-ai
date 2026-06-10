@@ -51,6 +51,13 @@ class LinguaCommerce_AI_Admin {
         add_action( 'wp_ajax_lingua_clear_all_queue', array( $this, 'ajax_clear_all_queue' ) );
         add_action( 'wp_ajax_lingua_trigger_cron', array( $this, 'ajax_trigger_cron' ) );
         add_action( 'wp_ajax_lingua_get_system_status', array( $this, 'ajax_get_system_status' ) );
+
+        // Actions AJAX - Langues (enregistrées ici pour être toujours disponibles)
+        add_action( 'wp_ajax_lingua_save_languages', array( $this, 'ajax_save_languages' ) );
+        add_action( 'wp_ajax_lingua_toggle_language_status', array( $this, 'ajax_toggle_language_status' ) );
+        add_action( 'wp_ajax_lingua_set_default_language', array( $this, 'ajax_set_default_language' ) );
+        add_action( 'wp_ajax_lingua_add_language', array( $this, 'ajax_add_language' ) );
+        add_action( 'wp_ajax_lingua_delete_language', array( $this, 'ajax_delete_language' ) );
     }
 
     // =========================================================================
@@ -1971,5 +1978,252 @@ class LinguaCommerce_AI_Admin {
             'processed' => $processed,
             'errors'    => $errors,
         ) );
+    }
+
+    // =========================================================================
+    // ACTIONS AJAX - LANGUES
+    // =========================================================================
+
+    /**
+     * Sauvegarde en masse les langues actives
+     * Reçoit un tableau de codes langue, désactive ceux qui ne sont pas dans la liste,
+     * active ceux qui y sont, et crée les entrées manquantes depuis le registre.
+     */
+    public function ajax_save_languages() {
+        check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusee.' ) );
+        }
+
+        global $wpdb;
+        $table_languages = $wpdb->prefix . 'lingua_languages';
+
+        $active_codes = isset( $_POST['languages'] ) ? $_POST['languages'] : array();
+        if ( ! is_array( $active_codes ) ) {
+            $active_codes = array( $active_codes );
+        }
+
+        // Nettoyage des codes reçus
+        $active_codes = array_map( 'sanitize_text_field', $active_codes );
+        $active_codes = array_filter( $active_codes, function( $code ) {
+            return ! empty( $code ) && strlen( $code ) <= 10;
+        });
+
+        if ( empty( $active_codes ) ) {
+            wp_send_json_error( array( 'message' => 'Vous devez avoir au moins une langue active.' ) );
+        }
+
+        // Charger le registre des langues
+        if ( ! class_exists( 'LinguaCommerce_Language_Registry' ) ) {
+            require_once plugin_dir_path( __FILE__ ) . 'includes/class-lingua-language-registry.php';
+        }
+        $registry = LinguaCommerce_Language_Registry::get_all();
+
+        // 1. Récupérer toutes les langues installées
+        $installed = $wpdb->get_results( "SELECT id, code, is_active, is_default FROM {$table_languages}" );
+        $installed_map = array();
+        foreach ( $installed as $lang ) {
+            $installed_map[ $lang->code ] = $lang;
+        }
+
+        $errors = 0;
+        $added = 0;
+        $activated = 0;
+        $deactivated = 0;
+
+        // 2. Traiter les langues déjà installées
+        foreach ( $installed_map as $code => $lang ) {
+            if ( in_array( $code, $active_codes ) ) {
+                // Activer si pas encore actif
+                if ( ! (bool) $lang->is_active ) {
+                    $wpdb->update(
+                        $table_languages,
+                        array( 'is_active' => 1 ),
+                        array( 'id' => $lang->id ),
+                        array( '%d' ),
+                        array( '%d' )
+                    );
+                    $activated++;
+                }
+            } else {
+                // Ne jamais désactiver la langue source (is_default)
+                if ( (bool) $lang->is_default ) {
+                    continue;
+                }
+                // Désactiver si actuellement actif
+                if ( (bool) $lang->is_active ) {
+                    $wpdb->update(
+                        $table_languages,
+                        array( 'is_active' => 0 ),
+                        array( 'id' => $lang->id ),
+                        array( '%d' ),
+                        array( '%d' )
+                    );
+                    $deactivated++;
+                }
+            }
+        }
+
+        // 3. Ajouter et activer les langues qui ne sont pas encore dans la BDD
+        foreach ( $active_codes as $code ) {
+            if ( ! isset( $installed_map[ $code ] ) ) {
+                $lang_data = isset( $registry[ $code ] ) ? $registry[ $code ] : null;
+                $name = $lang_data ? $lang_data['name'] : $code;
+                $native_name = $lang_data ? $lang_data['native_name'] : $code;
+                $locale = $lang_data ? $lang_data['locale'] : $code;
+                $country_code = LinguaCommerce_Language_Registry::get_country_code( $code );
+
+                $result = $wpdb->insert(
+                    $table_languages,
+                    array(
+                        'code'        => $code,
+                        'name'        => $name,
+                        'native_name' => $native_name,
+                        'flag'        => $country_code ? $country_code : '',
+                        'is_active'   => 1,
+                        'is_default'  => 0,
+                        'locale'      => $locale,
+                    ),
+                    array( '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+                );
+
+                if ( $result ) {
+                    $added++;
+                } else {
+                    $errors++;
+                }
+            }
+        }
+
+        // Purger le cache
+        wp_cache_delete( 'lingua_languages', 'lingua' );
+        delete_transient( 'lingua_default_language' );
+
+        wp_send_json_success( array(
+            'message'    => sprintf( '%d activee(s), %d desactivee(s), %d ajoutee(s)', $activated, $deactivated, $added ),
+            'activated'  => $activated,
+            'deactivated' => $deactivated,
+            'added'      => $added,
+            'errors'     => $errors,
+        ) );
+    }
+
+    /**
+     * Active/désactive une langue
+     */
+    public function ajax_toggle_language_status() {
+        check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusee.' ) );
+        }
+
+        global $wpdb;
+        $table_languages = $wpdb->prefix . 'lingua_languages';
+        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $status = isset( $_POST['status'] ) ? intval( $_POST['status'] ) : 0;
+
+        if ( $id <= 0 ) wp_send_json_error( array( 'message' => 'ID invalide.' ) );
+        if ( ! in_array( $status, array( 0, 1 ) ) ) wp_send_json_error( array( 'message' => 'Statut invalide.' ) );
+
+        $lang = $wpdb->get_row( $wpdb->prepare( "SELECT is_default FROM {$table_languages} WHERE id = %d", $id ) );
+        if ( ! $lang ) wp_send_json_error( array( 'message' => 'Langue introuvable.' ) );
+        if ( $lang->is_default && $status == 0 ) wp_send_json_error( array( 'message' => 'Impossible de desactiver la langue source.' ) );
+
+        $wpdb->update( $table_languages, array( 'is_active' => $status ), array( 'id' => $id ), array( '%d' ), array( '%d' ) );
+        wp_send_json_success( array( 'message' => 'Statut mis a jour' ) );
+    }
+
+    /**
+     * Définit la langue source par défaut
+     */
+    public function ajax_set_default_language() {
+        check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusee.' ) );
+        }
+
+        global $wpdb;
+        $table_languages = $wpdb->prefix . 'lingua_languages';
+        $input = isset( $_POST['id'] ) ? $_POST['id'] : 0;
+        $target_lang = null;
+
+        if ( is_numeric( $input ) && intval( $input ) > 0 ) {
+            $id = intval( $input );
+            $target_lang = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_languages} WHERE id = %d", $id ) );
+        } else {
+            $code = sanitize_text_field( $input );
+            $target_lang = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table_languages} WHERE code = %s", $code ) );
+        }
+
+        if ( ! $target_lang ) wp_send_json_error( array( 'message' => 'Langue introuvable dans la base de donnees.' ) );
+
+        $wpdb->update( $table_languages, array( 'is_default' => 0 ), array( 'is_default' => 1 ), array( '%d' ), array( '%d' ) );
+        $updated = $wpdb->update( $table_languages, array( 'is_default' => 1, 'is_active' => 1 ), array( 'id' => $target_lang->id ), array( '%d', '%d' ), array( '%d' ) );
+
+        if ( false === $updated ) wp_send_json_error( array( 'message' => 'Erreur base de donnees lors de la mise a jour.' ) );
+
+        delete_transient( 'lingua_default_language' );
+        wp_cache_delete( 'lingua_languages', 'lingua' );
+
+        wp_send_json_success( array(
+            'message'   => 'Langue source definie avec succes.',
+            'lang_name' => $target_lang->native_name,
+            'lang_id'   => $target_lang->id,
+            'lang_code' => $target_lang->code,
+        ) );
+    }
+
+    /**
+     * Ajoute une nouvelle langue
+     */
+    public function ajax_add_language() {
+        check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusee.' ) );
+        }
+
+        global $wpdb;
+        $table_languages = $wpdb->prefix . 'lingua_languages';
+        $code = isset( $_POST['code'] ) ? sanitize_text_field( $_POST['code'] ) : '';
+        $name = isset( $_POST['name'] ) ? sanitize_text_field( $_POST['name'] ) : '';
+        $native_name = isset( $_POST['native_name'] ) ? sanitize_text_field( $_POST['native_name'] ) : '';
+        $locale = isset( $_POST['locale'] ) ? sanitize_text_field( $_POST['locale'] ) : $code;
+
+        if ( empty( $code ) || strlen( $code ) > 10 ) wp_send_json_error( array( 'message' => 'Code langue invalide.' ) );
+
+        $exists = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table_languages} WHERE code = %s", $code ) );
+        if ( $exists ) wp_send_json_error( array( 'message' => 'Cette langue est deja installee.' ) );
+
+        $result = $wpdb->insert(
+            $table_languages,
+            array( 'code' => $code, 'name' => $name, 'native_name' => $native_name, 'locale' => $locale, 'is_active' => 0, 'is_default' => 0 ),
+            array( '%s', '%s', '%s', '%s', '%d', '%d' )
+        );
+
+        if ( $result ) wp_send_json_success( array( 'message' => 'Langue ajoutee avec succes' ) );
+        else wp_send_json_error( array( 'message' => 'Erreur lors de l\'ajout en base de donnees.' ) );
+    }
+
+    /**
+     * Supprime une langue
+     */
+    public function ajax_delete_language() {
+        check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusee.' ) );
+        }
+
+        global $wpdb;
+        $table_languages = $wpdb->prefix . 'lingua_languages';
+        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+
+        if ( $id <= 0 ) wp_send_json_error( array( 'message' => 'ID invalide.' ) );
+
+        $lang = $wpdb->get_row( $wpdb->prepare( "SELECT is_default, code FROM {$table_languages} WHERE id = %d", $id ) );
+        if ( ! $lang ) wp_send_json_error( array( 'message' => 'Langue introuvable.' ) );
+        if ( $lang->is_default ) wp_send_json_error( array( 'message' => 'Impossible de supprimer la langue source.' ) );
+
+        $wpdb->delete( $table_languages, array( 'id' => $id ), array( '%d' ) );
+        wp_send_json_success( array( 'message' => 'Langue supprimee' ) );
     }
 }

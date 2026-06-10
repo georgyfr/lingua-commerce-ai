@@ -540,7 +540,7 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        btn.prop('disabled', true).text('Sauvegarde...');
+        btn.prop('disabled', true).text('Sauvegarde en cours...');
         $('#lingua-languages-status').text('');
 
         $.ajax({
@@ -553,20 +553,35 @@ jQuery(document).ready(function($) {
             },
             success: function(res) {
                 if (res.success) {
-                    $('#lingua-languages-status').text('Langues sauvegardees avec succes !').css('color', 'green');
-                    setTimeout(function() { location.reload(); }, 1500);
+                    // Rechargement automatique immediat de la page
+                    location.reload();
                 } else {
-                    $('#lingua-languages-status').text('Erreur : ' + res.data).css('color', 'red');
+                    var errorMsg = 'Erreur';
+                    if (res.data && res.data.message) {
+                        errorMsg = res.data.message;
+                    } else if (typeof res.data === 'string') {
+                        errorMsg = res.data;
+                    }
+                    $('#lingua-languages-status').text('Erreur : ' + errorMsg).css('color', 'red');
+                    btn.prop('disabled', false).text('Sauvegarder les langues actives');
                 }
             },
             error: function(xhr, status, error) {
-                var msg = 'Erreur serveur';
-                if (xhr.responseJSON && xhr.responseJSON.data) {
-                    msg += ' : ' + xhr.responseJSON.data;
+                var errorMsg = 'Erreur serveur';
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        errorMsg = xhr.responseJSON.data.message;
+                    } else if (typeof xhr.responseJSON.data === 'string') {
+                        errorMsg = xhr.responseJSON.data;
+                    }
+                } else if (xhr.status === 0) {
+                    errorMsg = 'Connexion perdue. Verifiez votre reseau.';
+                } else if (xhr.status === 403) {
+                    errorMsg = 'Acces refuse. Rechargez la page.';
+                } else if (xhr.status === 500) {
+                    errorMsg = 'Erreur interne du serveur. Consultez les logs PHP.';
                 }
-                $('#lingua-languages-status').text(msg).css('color', 'red');
-            },
-            complete: function() {
+                $('#lingua-languages-status').text(errorMsg).css('color', 'red');
                 btn.prop('disabled', false).text('Sauvegarder les langues actives');
             }
         });
