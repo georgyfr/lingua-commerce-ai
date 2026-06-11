@@ -67,6 +67,7 @@ class Lingua_Admin_AI {
             add_action( 'wp_ajax_lingua_test_api_key', array( $this, 'ajax_test_api_key' ) );
             add_action( 'wp_ajax_lingua_set_primary_engine', array( $this, 'ajax_set_primary_engine' ) );
             add_action( 'wp_ajax_lingua_save_api_keys', array( $this, 'ajax_save_api_keys' ) );
+            add_action( 'wp_ajax_lingua_save_ai_settings_ajax', array( $this, 'ajax_save_ai_settings_ajax' ) );
             add_action( 'wp_ajax_lingua_trigger_queue', array( $this, 'ajax_trigger_queue' ) );
             add_action( 'wp_ajax_lingua_retry_failed', array( $this, 'ajax_retry_failed' ) );
             add_action( 'wp_ajax_lingua_clear_queue', array( $this, 'ajax_clear_queue' ) );
@@ -1193,6 +1194,74 @@ class Lingua_Admin_AI {
         }
     }
 
+    /**
+     * Sauvegarde les réglages IA via AJAX (version pour la page IA & Automatisation)
+     * Utilise l'option lingua_commerce_ai_ai_settings (clé correcte)
+     */
+    public function ajax_save_ai_settings_ajax() {
+        ob_start();
+        check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
+        if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
+            wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
+        }
+
+        $existing = get_option( 'lingua_commerce_ai_ai_settings', array() );
+        if ( ! is_array( $existing ) ) {
+            $existing = array();
+        }
+
+        $settings = isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ? $_POST['settings'] : array();
+
+        // Conserver les clés API existantes
+        $engine_slugs = array( 'zai', 'openrouter', 'deepseek', 'deepl', 'google', 'mistral', 'yandex', 'baidu', 'microsoft' );
+        foreach ( $engine_slugs as $slug ) {
+            $key_field = 'api_key_' . $slug;
+            if ( isset( $existing[ $key_field ] ) ) {
+                $settings[ $key_field ] = $existing[ $key_field ];
+            }
+        }
+
+        // Sanitize settings
+        if ( isset( $settings['primary_engine'] ) ) {
+            $settings['primary_engine'] = sanitize_text_field( $settings['primary_engine'] );
+        }
+        if ( isset( $settings['fallback_engine'] ) ) {
+            $settings['fallback_engine'] = sanitize_text_field( $settings['fallback_engine'] );
+        }
+        if ( isset( $settings['auto_translate'] ) ) {
+            $settings['auto_translate'] = intval( $settings['auto_translate'] ) ? 1 : 0;
+        }
+        if ( isset( $settings['quality_check'] ) ) {
+            $settings['quality_check'] = intval( $settings['quality_check'] ) ? 1 : 0;
+        }
+        if ( isset( $settings['glossary_enabled'] ) ) {
+            $settings['glossary_enabled'] = intval( $settings['glossary_enabled'] ) ? 1 : 0;
+        }
+        if ( isset( $settings['batch_size'] ) ) {
+            $settings['batch_size'] = min( 50, max( 1, intval( $settings['batch_size'] ) ) );
+        }
+        if ( isset( $settings['retry_count'] ) ) {
+            $settings['retry_count'] = min( 10, max( 0, intval( $settings['retry_count'] ) ) );
+        }
+        if ( isset( $settings['rate_limit'] ) ) {
+            $settings['rate_limit'] = min( 1000, max( 1, intval( $settings['rate_limit'] ) ) );
+        }
+        if ( isset( $settings['custom_glossary'] ) ) {
+            $settings['custom_glossary'] = sanitize_textarea_field( $settings['custom_glossary'] );
+        }
+
+        $result = update_option( 'lingua_commerce_ai_ai_settings', $settings );
+
+        ob_end_clean();
+        if ( $result ) {
+            $this->log_event( 'success', 'settings', __( 'Réglages IA sauvegardés.', 'lingua-commerce-ai' ) );
+            wp_send_json_success( array( 'message' => __( 'Réglages IA sauvegardés avec succès.', 'lingua-commerce-ai' ) ) );
+        } else {
+            wp_send_json_success( array( 'message' => __( 'Aucune modification détectée.', 'lingua-commerce-ai' ) ) );
+        }
+    }
+
     // =========================================================================
     // FILE D'ATTENTE DE TRADUCTION
     // =========================================================================
@@ -1421,13 +1490,12 @@ class Lingua_Admin_AI {
         $api_key     = isset( $_POST['api_key'] ) ? sanitize_text_field( $_POST['api_key'] ) : '';
 
         if ( empty( $engine_slug ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Nom du moteur manquant.', 'lingua-commerce-ai' ) ) );
         }
 
-        // Z.AI est gratuit — pas de clé nécessaire, test direct
-        if ( 'zai' === $engine_slug ) {
-            $api_key = 'free';
-        }
+        // Z.AI nécessite une clé API (plan gratuit avec clé sur z.ai)
+        // Ne pas forcer $api_key = 'free' — l'utilisateur doit fournir sa clé
 
         // Si pas de clé fournie, chercher dans les réglages sauvegardés
         if ( empty( $api_key ) ) {
@@ -1466,6 +1534,7 @@ class Lingua_Admin_AI {
             $config['app_id']     = isset( $ai_settings['api_key_baidu_app_id'] ) ? $ai_settings['api_key_baidu_app_id'] : '';
             $config['secret_key'] = isset( $ai_settings['api_key_baidu_secret'] ) ? $ai_settings['api_key_baidu_secret'] : '';
             if ( empty( $config['app_id'] ) || empty( $config['secret_key'] ) ) {
+                ob_end_clean();
                 wp_send_json_error( array( 'message' => __( 'Identifiants Baidu manquants (App ID + Secret Key).', 'lingua-commerce-ai' ) ) );
             }
         }

@@ -539,6 +539,53 @@ class LinguaCommerce_AI_Admin {
             'lingua_commerce_ai_settings',
             array( $this, 'sanitize_settings' )
         );
+        // Enregistrer l'option AI pour la page "IA & Automatisation"
+        register_setting(
+            'lingua_commerce_ai_ai_settings_group',
+            'lingua_commerce_ai_ai_settings',
+            array( $this, 'sanitize_ai_settings' )
+        );
+    }
+
+    /**
+     * Nettoyage et validation des réglages AI (page IA & Automatisation)
+     *
+     * @param array $input Réglages AI soumis.
+     * @return array Réglages nettoyés.
+     */
+    public function sanitize_ai_settings( $input ) {
+        $sanitized = array();
+
+        // Clés API — conserver les clés existantes si pas soumises
+        $existing = get_option( 'lingua_commerce_ai_ai_settings', array() );
+        $engine_slugs = array( 'zai', 'openrouter', 'deepseek', 'deepl', 'google', 'mistral', 'yandex', 'baidu', 'microsoft' );
+        foreach ( $engine_slugs as $slug ) {
+            $key_field = 'api_key_' . $slug;
+            if ( isset( $input[ $key_field ] ) ) {
+                $sanitized[ $key_field ] = sanitize_text_field( $input[ $key_field ] );
+            } elseif ( isset( $existing[ $key_field ] ) ) {
+                $sanitized[ $key_field ] = $existing[ $key_field ];
+            }
+        }
+
+        // Moteur principal et de secours
+        $sanitized['primary_engine']  = isset( $input['primary_engine'] ) ? sanitize_text_field( $input['primary_engine'] ) : 'openrouter';
+        $sanitized['fallback_engine'] = isset( $input['fallback_engine'] ) ? sanitize_text_field( $input['fallback_engine'] ) : '';
+
+        // Toggles
+        $sanitized['auto_translate']   = isset( $input['auto_translate'] ) ? 1 : 0;
+        $sanitized['quality_check']    = isset( $input['quality_check'] ) ? 1 : 0;
+        $sanitized['glossary_enabled'] = isset( $input['glossary_enabled'] ) ? 1 : 0;
+
+        // Paramètres numériques
+        $sanitized['batch_size']  = isset( $input['batch_size'] ) ? min( 50, max( 1, intval( $input['batch_size'] ) ) ) : 5;
+        $sanitized['retry_count'] = isset( $input['retry_count'] ) ? min( 10, max( 0, intval( $input['retry_count'] ) ) ) : 3;
+        $sanitized['rate_limit']  = isset( $input['rate_limit'] ) ? min( 1000, max( 1, intval( $input['rate_limit'] ) ) ) : 60;
+
+        // Glossaire personnalisé
+        $sanitized['custom_glossary'] = isset( $input['custom_glossary'] ) ? sanitize_textarea_field( $input['custom_glossary'] ) : '';
+
+        return $sanitized;
     }
 
     /**

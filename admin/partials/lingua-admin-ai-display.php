@@ -628,19 +628,14 @@ if ( file_exists( $log_file ) ) {
                     <span class="key-engine-icon"><?php echo esc_html( $engine['icon'] ); ?></span>
                     <span class="key-engine-name"><?php echo esc_html( $engine['name'] ); ?></span>
                     <?php if ( isset( $engine['free'] ) && $engine['free'] ) : ?>
-                        <input type="hidden"
-                               name="lingua_commerce_ai_ai_settings[api_key_<?php echo esc_attr( $slug ); ?>]"
-                               value="free"
-                               data-engine="<?php echo esc_attr( $slug ); ?>">
                         <span style="color:#047857; font-weight:600; font-size:13px; flex:1;">✅ Gratuit — Aucune clé nécessaire</span>
                     <?php else : ?>
                         <input type="password"
-                               name="lingua_commerce_ai_ai_settings[api_key_<?php echo esc_attr( $slug ); ?>]"
                                value="<?php echo esc_attr( $api_keys[ $slug ] ); ?>"
-                               placeholder="Entrez votre clé API..."
-                               class="regular-text"
+                               placeholder="<?php echo 'zai' === $slug ? 'Clé API Z.AI...' : 'Entrez votre clé API...'; ?>"
+                               class="regular-text lingua-api-key-input-recap"
                                data-engine="<?php echo esc_attr( $slug ); ?>">
-                        <span class="key-toggle-vis" data-target='input[data-engine="<?php echo esc_attr( $slug ); ?>"]'>👁️</span>
+                        <span class="key-toggle-vis" data-target='input[data-engine="<?php echo esc_attr( $slug ); ?>"].lingua-api-key-input-recap'>👁️</span>
                     <?php endif; ?>
                     <button type="button" class="button button-small lingua-test-key-btn" data-engine="<?php echo esc_attr( $slug ); ?>">
                         🧪 Tester
@@ -664,7 +659,7 @@ if ( file_exists( $log_file ) ) {
                     <div class="description">Envoie les nouveaux contenus en traduction dès leur publication</div>
                 </div>
                 <div class="lingua-toggle-switch">
-                    <input type="checkbox" name="lingua_commerce_ai_ai_settings[auto_translate]" value="1" <?php checked( $auto_translate, 1 ); ?>>
+                    <input type="checkbox" id="toggle-auto-translate" class="lingua-ai-setting" data-setting="auto_translate" value="1" <?php checked( $auto_translate, 1 ); ?>>
                     <span class="lingua-toggle-slider"></span>
                 </div>
             </div>
@@ -675,7 +670,7 @@ if ( file_exists( $log_file ) ) {
                     <div class="description">Vérifie la cohérence des traductions avec un second passage</div>
                 </div>
                 <div class="lingua-toggle-switch">
-                    <input type="checkbox" name="lingua_commerce_ai_ai_settings[quality_check]" value="1" <?php checked( $quality_check, 1 ); ?>>
+                    <input type="checkbox" id="toggle-quality-check" class="lingua-ai-setting" data-setting="quality_check" value="1" <?php checked( $quality_check, 1 ); ?>>
                     <span class="lingua-toggle-slider"></span>
                 </div>
             </div>
@@ -686,7 +681,7 @@ if ( file_exists( $log_file ) ) {
                     <div class="description">Force certaines traductions pour les termes techniques</div>
                 </div>
                 <div class="lingua-toggle-switch">
-                    <input type="checkbox" name="lingua_commerce_ai_ai_settings[glossary_enabled]" value="1" <?php checked( $glossary_enabled, 1 ); ?>>
+                    <input type="checkbox" id="toggle-glossary" class="lingua-ai-setting" data-setting="glossary_enabled" value="1" <?php checked( $glossary_enabled, 1 ); ?>>
                     <span class="lingua-toggle-slider"></span>
                 </div>
             </div>
@@ -695,7 +690,7 @@ if ( file_exists( $log_file ) ) {
                 <tr>
                     <th style="padding:8px 0;">Moteur principal</th>
                     <td>
-                        <select name="lingua_commerce_ai_ai_settings[primary_engine]">
+                        <select class="lingua-ai-setting" data-setting="primary_engine">
                             <?php foreach ( $engines as $slug => $engine ) : ?>
                                 <option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $primary_engine, $slug ); ?>>
                                     <?php echo esc_html( $engine['icon'] . ' ' . $engine['name'] ); ?>
@@ -707,7 +702,7 @@ if ( file_exists( $log_file ) ) {
                 <tr>
                     <th style="padding:8px 0;">Moteur de secours</th>
                     <td>
-                        <select name="lingua_commerce_ai_ai_settings[fallback_engine]">
+                        <select class="lingua-ai-setting" data-setting="fallback_engine">
                             <option value="">Aucun</option>
                             <?php foreach ( $engines as $slug => $engine ) : ?>
                                 <option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $fallback_engine, $slug ); ?>>
@@ -720,28 +715,33 @@ if ( file_exists( $log_file ) ) {
                 <tr>
                     <th style="padding:8px 0;">Taille des lots</th>
                     <td>
-                        <input type="number" name="lingua_commerce_ai_ai_settings[batch_size]" value="<?php echo esc_attr( $batch_size ); ?>" min="1" max="50" style="width:80px;">
+                        <input type="number" class="lingua-ai-setting" data-setting="batch_size" value="<?php echo esc_attr( $batch_size ); ?>" min="1" max="50" style="width:80px;">
                     </td>
                 </tr>
                 <tr>
                     <th style="padding:8px 0;">Tentatives de retry</th>
                     <td>
-                        <input type="number" name="lingua_commerce_ai_ai_settings[retry_count]" value="<?php echo esc_attr( $retry_count ); ?>" min="0" max="10" style="width:80px;">
+                        <input type="number" class="lingua-ai-setting" data-setting="retry_count" value="<?php echo esc_attr( $retry_count ); ?>" min="0" max="10" style="width:80px;">
                     </td>
                 </tr>
                 <tr>
                     <th style="padding:8px 0;">Limite (req/min)</th>
                     <td>
-                        <input type="number" name="lingua_commerce_ai_ai_settings[rate_limit]" value="<?php echo esc_attr( $rate_limit ); ?>" min="1" max="1000" style="width:80px;">
+                        <input type="number" class="lingua-ai-setting" data-setting="rate_limit" value="<?php echo esc_attr( $rate_limit ); ?>" min="1" max="1000" style="width:80px;">
                     </td>
                 </tr>
             </table>
 
-            <?php if ( $glossary_enabled ) : ?>
+            <div id="lingua-glossary-section" style="<?php echo $glossary_enabled ? '' : 'display:none;'; ?>">
                 <h3 style="margin-top:15px;">📖 Glossaire personnalisé</h3>
                 <p class="description">Un terme par ligne, format : source = traduction</p>
-                <textarea name="lingua_commerce_ai_ai_settings[custom_glossary]" rows="5" class="large-text" style="font-family:monospace; font-size:12px;" placeholder="e-commerce = commerce électronique&#10;checkout = passage en caisse&#10;shopping cart = panier"><?php echo esc_textarea( $custom_glossary ); ?></textarea>
-            <?php endif; ?>
+                <textarea class="lingua-ai-setting large-text" data-setting="custom_glossary" rows="5" style="font-family:monospace; font-size:12px;" placeholder="e-commerce = commerce électronique&#10;checkout = passage en caisse&#10;shopping cart = panier"><?php echo esc_textarea( $custom_glossary ); ?></textarea>
+            </div>
+
+            <div style="margin-top:15px;">
+                <button type="button" id="lingua-save-settings-btn" class="button button-primary">💾 Sauvegarder les réglages IA</button>
+                <span id="lingua-settings-status" style="margin-left:10px;"></span>
+            </div>
         </div>
     </div>
 
@@ -815,14 +815,10 @@ if ( file_exists( $log_file ) ) {
         </div>
     </div>
 
-    <!-- SAVE ALL -->
-    <div class="lingua-ai-card">
-        <form method="post" action="options.php">
-            <?php settings_fields( 'lingua_commerce_ai_ai_settings_group' ); ?>
-            <p class="submit">
-                <?php submit_button( '💾 Sauvegarder tous les réglages IA', 'primary', 'submit', false ); ?>
-            </p>
-        </form>
+    <!-- SAVE ALL (les sauvegardes se font via AJAX — ce bouton est un raccourci) -->
+    <div class="lingua-ai-card" style="text-align:center; padding:15px;">
+        <button type="button" id="lingua-save-all-btn" class="button button-primary button-hero">💾 Tout sauvegarder (Clés + Réglages)</button>
+        <span id="lingua-save-all-status" style="margin-left:15px; font-size:14px;"></span>
     </div>
 
 </div>
@@ -1007,18 +1003,21 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Save API keys
+    // Save API keys (bouton "Sauvegarder les clés API" dans le récapitulatif)
     $('#lingua-save-api-keys-btn').on('click', function() {
         var btn = $(this);
         var keys = {};
+        // Lire les valeurs depuis les inputs du récapitulatif (classe .lingua-api-key-input-recap)
         <?php foreach ( $engines as $slug => $engine ) : ?>
-            keys['<?php echo esc_js( $slug ); ?>'] = $('input[data-engine="<?php echo esc_js( $slug ); ?>"]').val();
+            var recapInput_<?php echo esc_js( $slug ); ?> = $('.lingua-api-key-row .lingua-api-key-input-recap[data-engine="<?php echo esc_js( $slug ); ?>"]');
+            keys['<?php echo esc_js( $slug ); ?>'] = recapInput_<?php echo esc_js( $slug ); ?>.length ? (recapInput_<?php echo esc_js( $slug ); ?>.val() || '') : '';
         <?php endforeach; ?>
 
         btn.prop('disabled', true);
         $.ajax({
             url: ajaxurl,
             type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'lingua_save_api_keys',
                 keys: keys,
@@ -1030,11 +1029,11 @@ jQuery(document).ready(function($) {
                     // Recharger après un court délai pour mettre à jour les statuts des cartes
                     setTimeout(function() { location.reload(); }, 1200);
                 } else {
-                    $('#lingua-api-keys-status').text('❌ Erreur').css('color', 'red');
+                    $('#lingua-api-keys-status').text('❌ ' + (res.data && res.data.message ? res.data.message : 'Erreur')).css('color', 'red');
                 }
             },
-            error: function() {
-                $('#lingua-api-keys-status').text('❌ Erreur serveur').css('color', 'red');
+            error: function(xhr, status, error) {
+                $('#lingua-api-keys-status').text('❌ ' + getAjaxErrorMessage(xhr, status, error)).css('color', 'red');
             },
             complete: function() {
                 btn.prop('disabled', false);
@@ -1117,6 +1116,121 @@ jQuery(document).ready(function($) {
                     $('#ai-log-console').html('<div class="log-line log-info">Journaux vidés.</div>');
                 }
             }
+        });
+    });
+
+    // =========================================================================
+    // SAUVEGARDE DES RÉGLAGES IA (toggles, selects, inputs)
+    // =========================================================================
+
+    // Toggle glossaire : afficher/masquer la section
+    $('#toggle-glossary').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#lingua-glossary-section').slideDown(200);
+        } else {
+            $('#lingua-glossary-section').slideUp(200);
+        }
+    });
+
+    // Collecter les réglages IA depuis les éléments .lingua-ai-setting
+    function collectAISettings() {
+        var settings = {};
+        $('.lingua-ai-setting').each(function() {
+            var setting = $(this).data('setting');
+            if (!setting) return;
+            if ($(this).is('input[type="checkbox"]')) {
+                settings[setting] = $(this).is(':checked') ? 1 : 0;
+            } else if ($(this).is('select') || $(this).is('input[type="number"]')) {
+                settings[setting] = $(this).val();
+            } else if ($(this).is('textarea')) {
+                settings[setting] = $(this).val();
+            }
+        });
+        return settings;
+    }
+
+    // Sauvegarder les réglages IA via AJAX
+    $('#lingua-save-settings-btn').on('click', function() {
+        var btn = $(this);
+        var settings = collectAISettings();
+
+        btn.prop('disabled', true);
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'lingua_save_ai_settings_ajax',
+                settings: settings,
+                nonce: nonce
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success) {
+                    $('#lingua-settings-status').text('✅ Réglages sauvegardés !').css('color', 'green');
+                } else {
+                    $('#lingua-settings-status').text('❌ ' + (res.data && res.data.message ? res.data.message : 'Erreur')).css('color', 'red');
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#lingua-settings-status').text('❌ ' + getAjaxErrorMessage(xhr, status, error)).css('color', 'red');
+            },
+            complete: function() {
+                btn.prop('disabled', false);
+                setTimeout(function() { $('#lingua-settings-status').text(''); }, 3000);
+            }
+        });
+    });
+
+    // Bouton "Tout sauvegarder" — sauvegarde clés + réglages
+    $('#lingua-save-all-btn').on('click', function() {
+        var btn = $(this);
+        btn.prop('disabled', true);
+        $('#lingua-save-all-status').text('⏳ Sauvegarde en cours...').css('color', '#666');
+
+        // 1. Collecter les clés API depuis les inputs inline des cartes
+        var keys = {};
+        <?php foreach ( $engines as $slug => $engine ) : ?>
+            var input_<?php echo esc_js( $slug ); ?> = $('.lingua-engine-card .lingua-api-key-input[data-engine="<?php echo esc_js( $slug ); ?>"]');
+            if (input_<?php echo esc_js( $slug ); ?>.length) {
+                keys['<?php echo esc_js( $slug ); ?>'] = input_<?php echo esc_js( $slug ); ?>.val() || '';
+            } else {
+                // Fallback : input du récapitulatif
+                var recap_<?php echo esc_js( $slug ); ?> = $('.lingua-api-key-input-recap[data-engine="<?php echo esc_js( $slug ); ?>"]');
+                keys['<?php echo esc_js( $slug ); ?>'] = recap_<?php echo esc_js( $slug ); ?>.length ? (recap_<?php echo esc_js( $slug ); ?>.val() || '') : '';
+            }
+        <?php endforeach; ?>
+
+        // 2. Collecter les réglages
+        var settings = collectAISettings();
+
+        // 3. Sauvegarder les clés
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: { action: 'lingua_save_api_keys', keys: keys, nonce: nonce },
+            dataType: 'json'
+        }).always(function() {
+            // 4. Sauvegarder les réglages
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: { action: 'lingua_save_ai_settings_ajax', settings: settings, nonce: nonce },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.success) {
+                        $('#lingua-save-all-status').text('✅ Tout sauvegardé ! Rechargement...').css('color', 'green');
+                        setTimeout(function() { location.reload(); }, 1200);
+                    } else {
+                        $('#lingua-save-all-status').text('❌ ' + (res.data && res.data.message ? res.data.message : 'Erreur')).css('color', 'red');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#lingua-save-all-status').text('❌ ' + getAjaxErrorMessage(xhr, status, error)).css('color', 'red');
+                },
+                complete: function() {
+                    btn.prop('disabled', false);
+                }
+            });
         });
     });
 });
