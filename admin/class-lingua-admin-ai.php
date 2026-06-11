@@ -505,12 +505,12 @@ class Lingua_Admin_AI {
                 $api_key = isset( $config['api_key'] ) ? $config['api_key'] : '';
                 $model   = isset( $config['model'] ) ? $config['model'] : $this->get_default_llm_model( $engine_slug );
 
-                // Z.AI est gratuit — pas de clé API obligatoire
-                if ( empty( $api_key ) && 'zai' !== $engine_slug ) {
+                // Z.AI nécessite une clé API (plan gratuit avec clé sur z.ai)
+                if ( empty( $api_key ) ) {
                     $error_message = sprintf(
                         /* translators: %s: Engine name */
-                        __( 'Clé API %s manquante.', 'lingua-commerce-ai' ),
-                        ucfirst( $engine_slug )
+                        __( 'Clé API %s manquante. Obtenez-en une gratuitement sur z.ai/manage-apikey', 'lingua-commerce-ai' ),
+                        'Z.AI'
                     );
                     break;
                 }
@@ -1609,13 +1609,16 @@ class Lingua_Admin_AI {
      * Définit le moteur principal de traduction
      */
     public function ajax_set_primary_engine() {
+        ob_start();
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
         $engine = isset( $_POST['engine'] ) ? sanitize_text_field( $_POST['engine'] ) : '';
         if ( empty( $engine ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Moteur non spécifié.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1626,6 +1629,7 @@ class Lingua_Admin_AI {
         $ai_settings['primary_engine'] = $engine;
         update_option( 'lingua_commerce_ai_ai_settings', $ai_settings );
 
+        ob_end_clean();
         wp_send_json_success( array( 'message' => sprintf( __( 'Moteur principal défini : %s', 'lingua-commerce-ai' ), $engine ) ) );
     }
 
@@ -1633,8 +1637,10 @@ class Lingua_Admin_AI {
      * Sauvegarde toutes les clés API depuis le formulaire
      */
     public function ajax_save_api_keys() {
+        ob_start();
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1663,6 +1669,8 @@ class Lingua_Admin_AI {
 
         update_option( 'lingua_commerce_ai_ai_settings', $ai_settings );
 
+        ob_end_clean();
+
         $this->log_event( 'success', 'settings', sprintf(
             __( 'Clés API sauvegardées : %s', 'lingua-commerce-ai' ),
             implode( ', ', $saved_engines )
@@ -1675,8 +1683,10 @@ class Lingua_Admin_AI {
      * Lance le traitement de la file d'attente de traduction
      */
     public function ajax_trigger_queue() {
+        ob_start();
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1693,6 +1703,7 @@ class Lingua_Admin_AI {
         );
 
         if ( empty( $pending ) ) {
+            ob_end_clean();
             wp_send_json_success( array( 'message' => __( 'Aucune traduction en attente.', 'lingua-commerce-ai' ), 'processed' => 0 ) );
         }
 
@@ -1761,6 +1772,7 @@ class Lingua_Admin_AI {
             }
         }
 
+        ob_end_clean();
         wp_send_json_success( array(
             'message'   => sprintf( __( '%d traduites, %d erreurs.', 'lingua-commerce-ai' ), $processed, $errors ),
             'processed' => $processed,
@@ -1772,8 +1784,10 @@ class Lingua_Admin_AI {
      * Relance les traductions échouées
      */
     public function ajax_retry_failed() {
+        ob_start();
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1791,6 +1805,7 @@ class Lingua_Admin_AI {
             array( '%s' )
         );
 
+        ob_end_clean();
         wp_send_json_success( array(
             'message' => sprintf( __( '%d traductions replanifiées.', 'lingua-commerce-ai' ), (int) $result ),
             'count'   => (int) $result,
@@ -1801,8 +1816,10 @@ class Lingua_Admin_AI {
      * Vide la file d'attente
      */
     public function ajax_clear_queue() {
+        ob_start();
         check_ajax_referer( 'lingua_admin_nonce', 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
+            ob_end_clean();
             wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'lingua-commerce-ai' ) ) );
         }
 
@@ -1812,6 +1829,7 @@ class Lingua_Admin_AI {
             $wpdb->query( "TRUNCATE TABLE {$this->table_queue}" );
         }
 
+        ob_end_clean();
         wp_send_json_success( array( 'message' => __( 'File d\'attente vidée.', 'lingua-commerce-ai' ) ) );
     }
 
@@ -2065,9 +2083,9 @@ class Lingua_Admin_AI {
             case 'zai':
                 $api_key = isset( $config['api_key'] ) ? $config['api_key'] : '';
                 $model   = isset( $config['model'] ) ? $config['model'] : $this->get_default_llm_model( $engine_slug );
-                // Z.AI est gratuit — pas de clé obligatoire
-                if ( empty( $api_key ) && 'zai' !== $engine_slug ) {
-                    return new WP_Error( 'missing_key', sprintf( __( 'Clé API %s manquante.', 'lingua-commerce-ai' ), ucfirst( $engine_slug ) ) );
+                // Z.AI nécessite une clé API (plan gratuit avec clé sur z.ai)
+                if ( empty( $api_key ) ) {
+                    return new WP_Error( 'missing_key', sprintf( __( 'Clé API %s manquante. Obtenez-en une gratuitement sur z.ai/manage-apikey', 'lingua-commerce-ai' ), 'Z.AI' ) );
                 }
                 $chat_endpoint = $this->get_llm_endpoint( $engine_slug );
                 $prompt        = $this->build_translation_prompt( $text, $source_lang, $target_lang, $ai_tone, $custom_instructions );
@@ -2081,7 +2099,7 @@ class Lingua_Admin_AI {
                     'max_tokens'  => 4096,
                 );
                 $chat_headers = array( 'Content-Type' => 'application/json' );
-                if ( ! empty( $api_key ) && 'free' !== $api_key ) {
+                if ( ! empty( $api_key ) ) {
                     $chat_headers['Authorization'] = 'Bearer ' . $api_key;
                 }
                 if ( in_array( $engine_slug, array( 'openrouter', 'zai' ), true ) ) {
@@ -2114,7 +2132,28 @@ class Lingua_Admin_AI {
 
                 if ( isset( $body['choices'][0]['message']['content'] ) ) {
                     return $this->clean_ai_output( trim( $body['choices'][0]['message']['content'] ) );
-                } elseif ( isset( $body['error']['message'] ) ) {
+                }
+
+                // Z.AI renvoie des erreurs au format {"code": ..., "msg": "...", "success": false} même en HTTP 200
+                if ( 'zai' === $engine_slug && isset( $body['success'] ) && false === $body['success'] ) {
+                    $zai_msg = isset( $body['msg'] ) ? $body['msg'] : '';
+                    $zai_code = isset( $body['code'] ) ? $body['code'] : 0;
+                    // Traduire les messages d'erreur chinois de Z.AI
+                    $zai_errors = array(
+                        'Header中未收到Authorization参数，无法进行身份验证。' => 'Clé API manquante. Ajoutez votre clé Z.AI dans les paramètres.',
+                        '令牌已过期或验证不正确' => 'Clé API Z.AI invalide ou expirée. Vérifiez votre clé sur z.ai/manage-apikey.',
+                        '请求频率超过限制' => 'Limite de requêtes Z.AI atteinte. Réessayez dans quelques instants.',
+                        '余额不足' => 'Crédit Z.AI insuffisant.',
+                        '模型不存在' => 'Modèle Z.AI non disponible. Vérifiez la configuration du modèle.',
+                    );
+                    $translated_msg = isset( $zai_errors[ $zai_msg ] ) ? $zai_errors[ $zai_msg ] : $zai_msg;
+                    if ( empty( $translated_msg ) ) {
+                        $translated_msg = sprintf( 'Erreur Z.AI (code %d)', $zai_code );
+                    }
+                    return new WP_Error( 'zai_api_error', $translated_msg );
+                }
+
+                if ( isset( $body['error']['message'] ) ) {
                     return new WP_Error( 'api_error', sprintf(
                         /* translators: 1: Engine name 2: API error message */
                         __( 'Erreur API %1$s : %2$s', 'lingua-commerce-ai' ),

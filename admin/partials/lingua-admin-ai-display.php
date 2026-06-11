@@ -41,7 +41,7 @@ $engines = array(
     'zai' => array(
         'name'        => 'Z.AI',
         'icon'        => '⚡',
-        'desc'        => 'Moteur IA gratuit par Z.ai — traduction illimitée, sans frais, idéale pour démarrer',
+        'desc'        => 'Moteur IA par Z.ai — plan gratuit avec clé API, traduction illimitée',
         'color'       => '#10b981',
         'gradient'    => 'linear-gradient(135deg, #059669, #34d399)',
         'type'        => 'llm',
@@ -427,7 +427,7 @@ if ( file_exists( $log_file ) ) {
         flex-shrink: 0;
     }
 
-    .lingua-toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .lingua-toggle-switch input { position: absolute; opacity: 0; width: 44px; height: 22px; cursor: pointer; z-index: 1; margin: 0; }
 
     .lingua-toggle-slider {
         position: absolute;
@@ -450,8 +450,10 @@ if ( file_exists( $log_file ) ) {
         transition: 0.3s;
     }
 
-    .lingua-toggle-switch input:checked + .lingua-toggle-slider { background-color: #2271b1; }
-    .lingua-toggle-switch input:checked + .lingua-toggle-slider:before { transform: translateX(22px); }
+    .lingua-toggle-switch input:checked + .lingua-toggle-slider,
+    .lingua-toggle-switch input:checked ~ .lingua-toggle-slider { background-color: #2271b1; }
+    .lingua-toggle-switch input:checked + .lingua-toggle-slider:before,
+    .lingua-toggle-switch input:checked ~ .lingua-toggle-slider:before { transform: translateX(22px); }
 
     /* API KEY INPUT */
     .lingua-api-key-row {
@@ -515,7 +517,7 @@ if ( file_exists( $log_file ) ) {
         <?php foreach ( $engines as $slug => $engine ) :
             $is_primary = ( $primary_engine === $slug );
             $key_set = ! empty( $api_keys[ $slug ] );
-            $can_test = ( isset( $engine['free'] ) && $engine['free'] ) || $key_set;
+            $can_test = $key_set;
         ?>
             <div class="lingua-engine-card <?php echo $is_primary ? 'is-primary' : ''; ?>"
                  style="--engine-color: <?php echo esc_attr( $engine['color'] ); ?>; --engine-gradient: <?php echo esc_attr( $engine['gradient'] ); ?>"
@@ -560,7 +562,7 @@ if ( file_exists( $log_file ) ) {
                 </div>
                 <div class="engine-key-status">
                     <?php if ( isset( $engine['free'] ) && $engine['free'] ) : ?>
-                        <span class="key-set" style="background:#d1fae5; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; color:#047857;">✅ GRATUIT — Aucune clé requise</span>
+                        <span class="key-set" style="background:#fff8e5; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; color:#92400e;">🔑 Clé API requise (plan gratuit)</span>
                     <?php elseif ( $key_set ) : ?>
                         <span class="key-set">✅ Clé API configurée</span>
                     <?php else : ?>
@@ -628,11 +630,18 @@ if ( file_exists( $log_file ) ) {
                     <span class="key-engine-icon"><?php echo esc_html( $engine['icon'] ); ?></span>
                     <span class="key-engine-name"><?php echo esc_html( $engine['name'] ); ?></span>
                     <?php if ( isset( $engine['free'] ) && $engine['free'] ) : ?>
-                        <span style="color:#047857; font-weight:600; font-size:13px; flex:1;">✅ Gratuit — Aucune clé nécessaire</span>
+                        <input type="password"
+                               value="<?php echo esc_attr( $api_keys[ $slug ] ); ?>"
+                               placeholder="Clé API Z.AI (optionnel)..."
+                               class="regular-text lingua-api-key-input-recap"
+                               data-engine="<?php echo esc_attr( $slug ); ?>"
+                               style="flex:1; font-size:12px; font-family:monospace;">
+                        <span class="key-toggle-vis" data-target='input[data-engine="<?php echo esc_attr( $slug ); ?>"].lingua-api-key-input-recap'>👁️</span>
+                        <span style="color:#92400e; font-size:11px; font-weight:600; white-space:nowrap;">🔑 Gratuit</span>
                     <?php else : ?>
                         <input type="password"
                                value="<?php echo esc_attr( $api_keys[ $slug ] ); ?>"
-                               placeholder="<?php echo 'zai' === $slug ? 'Clé API Z.AI...' : 'Entrez votre clé API...'; ?>"
+                               placeholder="Entrez votre clé API..."
                                class="regular-text lingua-api-key-input-recap"
                                data-engine="<?php echo esc_attr( $slug ); ?>">
                         <span class="key-toggle-vis" data-target='input[data-engine="<?php echo esc_attr( $slug ); ?>"].lingua-api-key-input-recap'>👁️</span>
@@ -655,34 +664,34 @@ if ( file_exists( $log_file ) ) {
 
             <div class="lingua-toggle-row">
                 <div>
-                    <label>Traduction automatique</label>
+                    <label for="toggle-auto-translate">Traduction automatique</label>
                     <div class="description">Envoie les nouveaux contenus en traduction dès leur publication</div>
                 </div>
                 <div class="lingua-toggle-switch">
                     <input type="checkbox" id="toggle-auto-translate" class="lingua-ai-setting" data-setting="auto_translate" value="1" <?php checked( $auto_translate, 1 ); ?>>
-                    <span class="lingua-toggle-slider"></span>
+                    <label class="lingua-toggle-slider" for="toggle-auto-translate"></label>
                 </div>
             </div>
 
             <div class="lingua-toggle-row">
                 <div>
-                    <label>Contrôle qualité IA</label>
+                    <label for="toggle-quality-check">Contrôle qualité IA</label>
                     <div class="description">Vérifie la cohérence des traductions avec un second passage</div>
                 </div>
                 <div class="lingua-toggle-switch">
                     <input type="checkbox" id="toggle-quality-check" class="lingua-ai-setting" data-setting="quality_check" value="1" <?php checked( $quality_check, 1 ); ?>>
-                    <span class="lingua-toggle-slider"></span>
+                    <label class="lingua-toggle-slider" for="toggle-quality-check"></label>
                 </div>
             </div>
 
             <div class="lingua-toggle-row">
                 <div>
-                    <label>Glossaire personnalisé</label>
+                    <label for="toggle-glossary">Glossaire personnalisé</label>
                     <div class="description">Force certaines traductions pour les termes techniques</div>
                 </div>
                 <div class="lingua-toggle-switch">
                     <input type="checkbox" id="toggle-glossary" class="lingua-ai-setting" data-setting="glossary_enabled" value="1" <?php checked( $glossary_enabled, 1 ); ?>>
-                    <span class="lingua-toggle-slider"></span>
+                    <label class="lingua-toggle-slider" for="toggle-glossary"></label>
                 </div>
             </div>
 
@@ -880,7 +889,7 @@ jQuery(document).ready(function($) {
     $('.lingua-test-key-btn').on('click', function() {
         var btn = $(this);
         var engine = btn.data('engine');
-        var input = $('input[data-engine="' + engine + '"]');
+        var input = btn.closest('.lingua-api-key-row').find('.lingua-api-key-input-recap[data-engine="' + engine + '"]');
         var apiKey = input.val() || '';
 
         btn.prop('disabled', true).text('⏳ Test...');
@@ -990,6 +999,7 @@ jQuery(document).ready(function($) {
         $.ajax({
             url: ajaxurl,
             type: 'POST',
+            dataType: 'json',
             data: {
                 action: 'lingua_set_primary_engine',
                 engine: engine,
@@ -1050,6 +1060,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: { action: 'lingua_trigger_queue', nonce: nonce },
+            dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#queue-action-status').text('✅ ' + res.data.message);
@@ -1071,6 +1082,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: { action: 'lingua_retry_failed', nonce: nonce },
+            dataType: 'json',
             success: function(res) {
                 $('#queue-action-status').text(res.success ? '✅ ' + res.data.message : '❌ Erreur');
                 setTimeout(function() { location.reload(); }, 1500);
@@ -1084,6 +1096,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: { action: 'lingua_clear_queue', nonce: nonce },
+            dataType: 'json',
             success: function(res) {
                 $('#queue-action-status').text(res.success ? '✅ ' + res.data.message : '❌ Erreur');
                 setTimeout(function() { location.reload(); }, 1500);
@@ -1111,6 +1124,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             type: 'POST',
             data: { action: 'lingua_clear_logs', nonce: nonce },
+            dataType: 'json',
             success: function(res) {
                 if (res.success) {
                     $('#ai-log-console').html('<div class="log-line log-info">Journaux vidés.</div>');
@@ -1187,17 +1201,11 @@ jQuery(document).ready(function($) {
         btn.prop('disabled', true);
         $('#lingua-save-all-status').text('⏳ Sauvegarde en cours...').css('color', '#666');
 
-        // 1. Collecter les clés API depuis les inputs inline des cartes
+        // 1. Collecter les clés API depuis les inputs du récapitulatif
         var keys = {};
         <?php foreach ( $engines as $slug => $engine ) : ?>
-            var input_<?php echo esc_js( $slug ); ?> = $('.lingua-engine-card .lingua-api-key-input[data-engine="<?php echo esc_js( $slug ); ?>"]');
-            if (input_<?php echo esc_js( $slug ); ?>.length) {
-                keys['<?php echo esc_js( $slug ); ?>'] = input_<?php echo esc_js( $slug ); ?>.val() || '';
-            } else {
-                // Fallback : input du récapitulatif
-                var recap_<?php echo esc_js( $slug ); ?> = $('.lingua-api-key-input-recap[data-engine="<?php echo esc_js( $slug ); ?>"]');
-                keys['<?php echo esc_js( $slug ); ?>'] = recap_<?php echo esc_js( $slug ); ?>.length ? (recap_<?php echo esc_js( $slug ); ?>.val() || '') : '';
-            }
+            var recap_<?php echo esc_js( $slug ); ?> = $('.lingua-api-key-input-recap[data-engine="<?php echo esc_js( $slug ); ?>"]');
+            keys['<?php echo esc_js( $slug ); ?>'] = recap_<?php echo esc_js( $slug ); ?>.length ? (recap_<?php echo esc_js( $slug ); ?>.val() || '') : '';
         <?php endforeach; ?>
 
         // 2. Collecter les réglages
